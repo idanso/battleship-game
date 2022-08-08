@@ -44,6 +44,8 @@ SHIPCOLOR = YELLOW
 HIGHLIGHTCOLOR = BLUE
 
 
+
+
 def main():
     """
     The main function intializes the variables which will be used by the game.
@@ -357,3 +359,5 @@ def show_gameover_screen(shots_fired):
     while check_for_keypress() == None:  # Check if the user has pressed keys, if so start a new game
         pygame.display.update()
         FPSCLOCK.tick()
+
+main()

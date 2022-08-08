@@ -3,7 +3,7 @@ from random import random
 import numpy as np
 
 from multiConnectionServer import *
-
+from client_service import *
 
 def generate_default_tiles(height: int, width: int, ship_name_default, bool_shot_default):
     """
