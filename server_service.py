@@ -5,7 +5,62 @@ import numpy as np
 from multiConnectionServer import *
 from client_service import *
 
-def generate_default_tiles(height: int, width: int, ship_name_default, bool_shot_default):
+
+class Player:
+    def __init__(self, connection, address):
+        self.connection = connection
+        self.address = address
+        self.score = {"win": 0, "lose": 0}
+
+
+class Game:
+    def __init__(self, player_1: Player, player_2: Player):
+        self.players = [player_1, player_2]
+        self.score = [0, 0]
+        self.boards = {"player1": None, "player2": None}
+        self.active = True
+
+    def init_boards(self, height=10, width=10, ships_objs=None):
+        self.boards["player_1"] = generate_default_tiles(height, width)
+        self.boards["player_2"] = generate_default_tiles(height, width)
+
+        if ships_objs is None:
+            ship_objs = ['battleship', 'cruiser1', 'cruiser2', 'destroyer1', 'destroyer2',
+                         'destroyer3', 'submarine1', 'submarine2', 'submarine3', 'submarine4']  # List of the ships available
+
+        self.boards["player_1"] = add_ships_to_board(self.boards["player_1"], ship_objs)
+        self.boards["player_2"] = add_ships_to_board(self.boards["player_2"], ship_objs)
+
+
+class GamesTracker:
+    def __init__(self):
+        self.number_of_games = 0
+        self.games_lst = []
+
+    def add_game(self, game: Game):
+        self.games_lst.append(game)
+        self.number_of_games += 1
+
+    def get_player_and_game_by_port(self, player_port: int):
+        """
+        :param player_port:
+        :return:
+        """
+        for game in self.games_lst:
+            for i, player in enumerate(game.players):
+                if player.address[1] == player_port:
+                    return game, i
+        return None
+
+
+def start_game(player_1: Player, player_2: Player, game_tracker: GamesTracker):
+    game = Game(player_1, player_2)
+    game.init_boards()
+    game_tracker.add_game(game)
+    game
+
+
+def generate_default_tiles(height: int, width: int, ship_name_default=None, bool_shot_default=None):
     """
     Function generates a list of height x width tiles. The list will contain tuples
     ('shipName', boolShot) set to their (default_value).

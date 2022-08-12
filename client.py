@@ -36,4 +36,4 @@ def start_connections(host, port):
             sock.close()
 
 
-start_connections('127.0.0.1', 65432)
+start_connections('127.0.0.1', 1233)

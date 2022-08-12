@@ -2,6 +2,7 @@ import sys
 import socket
 import selectors
 import types
+import server_service
 
 #### Globals ####
 BOARDWIDTH = 10 #Number of grids horizontally
@@ -11,7 +12,7 @@ DEFAULT_SHIP_NAME = None
 DEFAULT_BOOL_SHOT = False
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
-PORT = 65432  # The port used by the server
+PORT = 1233  # The port used by the server
 
 #################
 def accept_wrapper(sock):
@@ -33,7 +34,7 @@ def service_connection(key, mask):
 
             if recv_data:
                 data.outb += recv_data
-                print("data recived from : " + bytes(recv_data).decode() + "from: " + str(data.addr))
+                print("data recived from : " + bytes(recv_data).decode() + ", from: " + str(data.addr))
             else:
                 print(f"Closing connection to {data.addr}")
                 sel.unregister(sock)
