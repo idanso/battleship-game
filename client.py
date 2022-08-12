@@ -1,3 +1,4 @@
+import json
 import sys
 import socket
 import selectors
@@ -27,10 +28,12 @@ def start_connections(host, port):
             )
             sel.register(sock, events, data=data)
             usr_input = input("enter name: ")
-            sock.send(usr_input.encode())
+            send_data = json.dumps({"name": usr_input})
+            sock.send(send_data.encode())
             recv_data = sock.recv(1024)  # Should be ready to read
-            print("data recived from server: " + bytes(recv_data).decode())
-            sleep(100)
+
+            print("data recived from server: " + str(json.loads(bytes(recv_data).decode())))
+            sleep(1000)
         finally:
             print("socket closed")
             sock.close()

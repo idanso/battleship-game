@@ -2,9 +2,7 @@ from random import random
 
 import numpy as np
 import uuid
-
-from multiConnectionServer import *
-from client_service import *
+import enum
 
 
 #### Globals ####
@@ -17,11 +15,18 @@ BOARD_HEIGHT = 10  # Number of grids vertically
 
 
 class Player:
-    def __init__(self, connection, address):
+
+    def __init__(self, address):
         self.id = uuid.uuid4()
-        self.connection = connection
+        # self.connection = connection  # TODO: check if needed
         self.address = address
         self.score = {"win": 0, "lose": 0}
+
+
+class GameStatus(enum.Enum):
+    ACTIVE = 1
+    ENDED = 2
+    READY = 3
 
 
 class Game:
@@ -30,7 +35,7 @@ class Game:
         self.players = [player_1, player_2]
         self.score = [0, 0]
         self.boards = {player_1.id: None, player_2.id: None}
-        self.active = True
+        self.status = GameStatus.ACTIVE
 
     def init_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
         player_1 = self.players[0].id
@@ -63,20 +68,21 @@ class GamesHandler:
         """
         game = Game(player_1, player_2)
         game.init_boards()
+
         self.add_game(game)
         return game.id
 
-    def get_player_and_game_by_port(self, player_port: int):
+    def get_active_player_and_game_by_port(self, player_address):
         """
         :param: player_port: the socket port of the player
         :return: id of active game of the player with player_port, id of player
                 if player not found return None
         """
         for game in self.games_lst:
-            if game.active:
+            if game.active == GameStatus.ACTIVE:
                 for player in game.players:
-                    if player.address[1] == player_port:
-                        return game.id, player.id
+                    if player.address[0] == player_address[0] and player.address[1] == player_address[1]:
+                        return tuple(game.id, player.id)
         return None
 
 
@@ -88,8 +94,12 @@ def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SH
     default_value -> boolean which tells what the value to set to
     :returns: the list of tuples
     """
-    default_tiles = np.full((height, width), (ship_name_default, bool_shot_default))
-
+    default_tiles = [[(ship_name_default, bool_shot_default) for _ in range(width)] for _ in range(height)]
+    # for x in range(height):
+    #     for y in range(width):
+    #         default_tiles[x][y] = (ship_name_default, bool_shot_default)
+    #default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
+    print(default_tiles)
     return default_tiles
 
 
