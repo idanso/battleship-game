@@ -2,6 +2,7 @@ import random, sys, pygame
 
 from cffi.backend_ctypes import xrange
 from pygame.locals import *
+from client import *
 
 
 # Set variables, like screen width and height
@@ -74,10 +75,10 @@ def main():
     SHOTS_RECT.topleft = (WINDOWWIDTH - 750, WINDOWHEIGHT - 570)
 
     # Load the explosion graphics from the /img folder
-    EXPLOSION_IMAGES = [
-        pygame.image.load("img/blowup1.png"), pygame.image.load("img/blowup2.png"),
-        pygame.image.load("img/blowup3.png"), pygame.image.load("img/blowup4.png"),
-        pygame.image.load("img/blowup5.png"), pygame.image.load("img/blowup6.png")]
+    # EXPLOSION_IMAGES = [
+    #     pygame.image.load("img/blowup1.png"), pygame.image.load("img/blowup2.png"),
+    #     pygame.image.load("img/blowup3.png"), pygame.image.load("img/blowup4.png"),
+    #     pygame.image.load("img/blowup5.png"), pygame.image.load("img/blowup6.png")]
 
     # Set the title in the menu bar to 'Battleship'
     pygame.display.set_caption('Battleship')
@@ -360,4 +361,4 @@ def show_gameover_screen(shots_fired):
         pygame.display.update()
         FPSCLOCK.tick()
 
-main()
+# main()

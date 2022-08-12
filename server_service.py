@@ -5,6 +5,7 @@ import uuid
 import enum
 
 
+
 #### Globals ####
 DEFAULT_SHIP_NAME = None
 DEFAULT_BOOL_SHOT = False
@@ -140,11 +141,13 @@ def set_markers(board):
     returns the 2 lists of markers with number of ship pieces in each row (xmarkers)
         and column (ymarkers)
     """
-    xmarkers = [0 for i in range(board.size[1])]
-    ymarkers = [0 for i in range(board.size[0])]
+    size_col = len(board[1])
+    size_rows = len(board[0])
+    xmarkers = [0 for i in range(size_col)]
+    ymarkers = [0 for i in range(size_rows)]
     # Loop through the tiles
-    for tilex in range(board.size[1]):
-        for tiley in range(board.size[0]):
+    for tilex in range(size_col):
+        for tiley in range(size_rows):
             if board[tilex][tiley][0] is not None:  # if the tile is a ship piece, then increment the markers
                 xmarkers[tilex] += 1
                 ymarkers[tiley] += 1
