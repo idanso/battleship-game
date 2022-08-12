@@ -1,13 +1,24 @@
 from random import random
 
 import numpy as np
+import uuid
 
 from multiConnectionServer import *
 from client_service import *
 
 
+#### Globals ####
+DEFAULT_SHIP_NAME = None
+DEFAULT_BOOL_SHOT = False
+
+BOARD_WIDTH = 10  # Number of grids horizontally
+BOARD_HEIGHT = 10  # Number of grids vertically
+################
+
+
 class Player:
     def __init__(self, connection, address):
+        self.id = uuid.uuid4()
         self.connection = connection
         self.address = address
         self.score = {"win": 0, "lose": 0}
@@ -15,24 +26,27 @@ class Player:
 
 class Game:
     def __init__(self, player_1: Player, player_2: Player):
+        self.id = uuid.uuid4()
         self.players = [player_1, player_2]
         self.score = [0, 0]
-        self.boards = {"player1": None, "player2": None}
+        self.boards = {player_1.id: None, player_2.id: None}
         self.active = True
 
-    def init_boards(self, height=10, width=10, ships_objs=None):
-        self.boards["player_1"] = generate_default_tiles(height, width)
-        self.boards["player_2"] = generate_default_tiles(height, width)
+    def init_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
+        player_1 = self.players[0].id
+        player_2 = self.players[1].id
+        self.boards[player_1] = generate_default_tiles(height, width)
+        self.boards[player_2] = generate_default_tiles(height, width)
 
         if ships_objs is None:
             ship_objs = ['battleship', 'cruiser1', 'cruiser2', 'destroyer1', 'destroyer2',
                          'destroyer3', 'submarine1', 'submarine2', 'submarine3', 'submarine4']  # List of the ships available
 
-        self.boards["player_1"] = add_ships_to_board(self.boards["player_1"], ship_objs)
-        self.boards["player_2"] = add_ships_to_board(self.boards["player_2"], ship_objs)
+        self.boards[player_1] = add_ships_to_board(self.boards[player_1], ship_objs)
+        self.boards[player_2] = add_ships_to_board(self.boards[player_2], ship_objs)
 
 
-class GamesTracker:
+class GamesHandler:
     def __init__(self):
         self.number_of_games = 0
         self.games_lst = []
@@ -41,32 +55,38 @@ class GamesTracker:
         self.games_lst.append(game)
         self.number_of_games += 1
 
+    def start_game(self, player_1: Player, player_2: Player):
+        """
+        create new game with initialized random boards for each player and add it to the games list
+        :param: two players who will take park of the game
+        :return: the game id
+        """
+        game = Game(player_1, player_2)
+        game.init_boards()
+        self.add_game(game)
+        return game.id
+
     def get_player_and_game_by_port(self, player_port: int):
         """
-        :param player_port:
-        :return:
+        :param: player_port: the socket port of the player
+        :return: id of active game of the player with player_port, id of player
+                if player not found return None
         """
         for game in self.games_lst:
-            for i, player in enumerate(game.players):
-                if player.address[1] == player_port:
-                    return game, i
+            if game.active:
+                for player in game.players:
+                    if player.address[1] == player_port:
+                        return game.id, player.id
         return None
 
 
-def start_game(player_1: Player, player_2: Player, game_tracker: GamesTracker):
-    game = Game(player_1, player_2)
-    game.init_boards()
-    game_tracker.add_game(game)
-    game
-
-
-def generate_default_tiles(height: int, width: int, ship_name_default=None, bool_shot_default=None):
+def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SHIP_NAME, bool_shot_default=DEFAULT_BOOL_SHOT):
     """
     Function generates a list of height x width tiles. The list will contain tuples
     ('shipName', boolShot) set to their (default_value).
 
     default_value -> boolean which tells what the value to set to
-    returns the list of tuples
+    :returns: the list of tuples
     """
     default_tiles = np.full((height, width), (ship_name_default, bool_shot_default))
 
@@ -92,8 +112,8 @@ def check_for_win(board):
     revealed -> list of revealed tiles
     returns True if all the ships are revealed
     """
-    for tilex in range(BOARDWIDTH):
-        for tiley in range(BOARDHEIGHT):
+    for tilex in range(board.size[1]):
+        for tiley in range(board.size[0]):
             # check if every board with a ship is revealed, return false if not
             loc = board[tilex][tiley]
             if loc[0] is not None and not loc[1]:
@@ -110,11 +130,11 @@ def set_markers(board):
     returns the 2 lists of markers with number of ship pieces in each row (xmarkers)
         and column (ymarkers)
     """
-    xmarkers = [0 for i in range(BOARDWIDTH)]
-    ymarkers = [0 for i in range(BOARDHEIGHT)]
+    xmarkers = [0 for i in range(board.size[1])]
+    ymarkers = [0 for i in range(board.size[0])]
     # Loop through the tiles
-    for tilex in range(BOARDWIDTH):
-        for tiley in range(BOARDHEIGHT):
+    for tilex in range(board.size[1]):
+        for tiley in range(board.size[0]):
             if board[tilex][tiley][0] is not None:  # if the tile is a ship piece, then increment the markers
                 xmarkers[tilex] += 1
                 ymarkers[tiley] += 1

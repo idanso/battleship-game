@@ -4,12 +4,10 @@ import selectors
 import types
 import server_service
 
-#### Globals ####
-BOARDWIDTH = 10 #Number of grids horizontally
-BOARDHEIGHT = 10 #Number of grids vertically
 
-DEFAULT_SHIP_NAME = None
-DEFAULT_BOOL_SHOT = False
+
+
+
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
