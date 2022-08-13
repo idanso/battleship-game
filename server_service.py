@@ -1,4 +1,4 @@
-from random import random
+import random
 
 import numpy as np
 import uuid
@@ -89,13 +89,13 @@ class GamesHandler:
 
 def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SHIP_NAME, bool_shot_default=DEFAULT_BOOL_SHOT):
     """
-    Function generates a list of height x width tiles. The list will contain tuples
+    Function generates a list of height x width tiles. The list will contain list
     ('shipName', boolShot) set to their (default_value).
 
     default_value -> boolean which tells what the value to set to
     :returns: the list of tuples
     """
-    default_tiles = [[(ship_name_default, bool_shot_default) for _ in range(width)] for _ in range(height)]
+    default_tiles = [[[ship_name_default, bool_shot_default] for _ in range(width)] for _ in range(height)]
     # for x in range(height):
     #     for y in range(width):
     #         default_tiles[x][y] = (ship_name_default, bool_shot_default)
@@ -123,8 +123,8 @@ def check_for_win(board):
     revealed -> list of revealed tiles
     returns True if all the ships are revealed
     """
-    for tilex in range(board.size[1]):
-        for tiley in range(board.size[0]):
+    for tilex in range(len(board)):
+        for tiley in range(len(board[0])):
             # check if every board with a ship is revealed, return false if not
             loc = board[tilex][tiley]
             if loc[0] is not None and not loc[1]:
