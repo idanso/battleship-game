@@ -5,46 +5,6 @@ from pygame.locals import *
 from client import *
 
 
-# Set variables, like screen width and height
-# globals
-FPS = 30 #Determines the number of frames per second
-REVEALSPEED = 8 #Determines the speed at which the squares reveals after being clicked
-WINDOWWIDTH = 800 #Width of game window
-WINDOWHEIGHT = 600 #Height of game window
-TILESIZE = 40 #Size of the squares in each grid(tile)
-MARKERSIZE = 40 #Size of the box which contatins the number that indicates how many ships in this row/col
-BUTTONHEIGHT = 20 #Height of a standard button
-BUTTONWIDTH = 40 #Width of a standard button
-TEXT_HEIGHT = 25 #Size of the text
-TEXT_LEFT_POSN = 10 #Where the text will be positioned
-BOARDWIDTH = 10 #Number of grids horizontally
-BOARDHEIGHT = 10 #Number of grids vertically
-DISPLAYWIDTH = 200 #Width of the game board
-EXPLOSIONSPEED = 10 #How fast the explosion graphics will play
-
-XMARGIN = int((WINDOWWIDTH - (BOARDWIDTH * TILESIZE) - DISPLAYWIDTH - MARKERSIZE) / 2) #x-position of the top left corner of board
-YMARGIN = int((WINDOWHEIGHT - (BOARDHEIGHT * TILESIZE) - MARKERSIZE) / 2) #y-position of the top left corner of board
-
-#Colours which will be used by the game
-BLACK   = (  0,   0,   0)
-WHITE   = (255, 255, 255)
-GREEN   = (  0, 204,   0)
-GRAY    = ( 60,  60,  60)
-BLUE    = (  0,  50, 255)
-YELLOW  = (255, 255,   0)
-DARKGRAY =( 40,  40,  40)
-
-#Determine what to colour each element of the game
-BGCOLOR = GRAY
-BUTTONCOLOR = GREEN
-TEXTCOLOR = WHITE
-TILECOLOR = GREEN
-BORDERCOLOR = BLUE
-TEXTSHADOWCOLOR = BLUE
-SHIPCOLOR = YELLOW
-HIGHLIGHTCOLOR = BLUE
-
-
 
 
 def main():
