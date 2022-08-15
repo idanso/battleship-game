@@ -152,7 +152,7 @@ def reveal_tile_animation(board, tile_to_reveal, elem_dict):
         draw_tile_covers(board, tile_to_reveal[0], coverage, elem_dict)
 
 
-def draw_board(board, elem_dict):
+def draw_board(board, elem_dict, my_board: bool):
     """
     Function draws the game board.
 
@@ -163,7 +163,7 @@ def draw_board(board, elem_dict):
     for tilex in range(BOARDWIDTH):
         for tiley in range(BOARDHEIGHT):
             left, top = left_top_coords_tile(tilex, tiley)
-            if not board[tilex][tiley][1]:
+            if not board[tilex][tiley][1] and not my_board:
                 pygame.draw.rect(elem_dict["DISPLAYSURF"], TILECOLOR, (left, top, TILESIZE,
                                                           TILESIZE))
             else:

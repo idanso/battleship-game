@@ -47,12 +47,30 @@ messages = [b"Message 1 from client.", b"Message 2 from client."]
 #             sock.close()
 
 def receive_data(sock):#made def incase we want to make difrent situations
+    """
+
+    Function for receiving data from the socket in json form.
+
+    sock -> the socket object to recive data from
+
+    return dictionary containing the data
+
+    """
     recv_data = sock.recv(1024)
     decoded_data = str(json.loads(bytes(recv_data).decode()))
     return decoded_data
 
 
 def send_data(data, sock):
+    """
+
+        Function for sending data from the socket in json form.
+
+        sock -> the socket object to send data from
+
+        data -> the data that should be sent
+
+        """
     send_data = json.dumps(data)
     sock.send(send_data.encode())
 
@@ -96,7 +114,7 @@ def run_game(host, port, elem_dict):
             init_elements(counter, elem_dict)
             # Draw the tiles onto the board and their respective markers
 
-            draw_board(my_board, elem_dict)
+            draw_board(my_board, elem_dict, False)
             draw_markers(xmarkers, ymarkers, elem_dict)
             pygame.display.update()
 
