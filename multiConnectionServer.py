@@ -2,7 +2,7 @@ import socket
 import selectors
 import types
 import server_service
-import json
+from shared import *
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
@@ -10,26 +10,6 @@ PORT = 1233  # The port used by the server
 
 #################
 
-def send_message(sock, data_dic):
-    try:
-        data_json = json.dumps(data_dic)
-        sock.send(data_json.encode())
-    except Exception as e:
-        print(e)
-
-
-def receive_message(sock):
-    try:
-        recv_data = sock.recv(1024)
-        if recv_data:
-            json_data = bytes(recv_data).decode()
-            return json.loads(json_data)
-        else:
-            return None
-
-    except Exception as e:
-        print(e)
-        return None
 
 
 def accept_wrapper(sock):
