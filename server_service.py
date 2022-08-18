@@ -1,10 +1,7 @@
 import random
 
-import numpy as np
 import uuid
 import enum
-
-
 
 #### Globals ####
 DEFAULT_SHIP_NAME = None
@@ -12,16 +9,18 @@ DEFAULT_BOOL_SHOT = False
 
 BOARD_WIDTH = 10  # Number of grids horizontally
 BOARD_HEIGHT = 10  # Number of grids vertically
+
+
 ################
 
 
-class Player:
-
-    def __init__(self, address):
-        self.id = uuid.uuid4()
-        # self.connection = connection  # TODO: check if needed
-        self.address = address
-        self.score = {"win": 0, "lose": 0}
+# class Player:
+#
+#     def __init__(self, address):
+#         self.id = uuid.uuid4()
+#         # self.connection = connection  # TODO: check if needed
+#         self.address = address
+#         self.score = {"win": 0, "lose": 0}
 
 
 class GameStatus(enum.Enum):
@@ -31,25 +30,24 @@ class GameStatus(enum.Enum):
 
 
 class Game:
-    def __init__(self, player_1: Player, player_2: Player):
+    def __init__(self, address):
         self.id = uuid.uuid4()
-        self.players = [player_1, player_2]
+        self.address = address
         self.score = [0, 0]
-        self.boards = {player_1.id: None, player_2.id: None}
+        self.boards = [None, None]
         self.status = GameStatus.ACTIVE
 
     def init_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
-        player_1 = self.players[0].id
-        player_2 = self.players[1].id
-        self.boards[player_1] = generate_default_tiles(height, width)
-        self.boards[player_2] = generate_default_tiles(height, width)
+        self.boards[0] = generate_default_tiles(height, width)
+        self.boards[1] = generate_default_tiles(height, width)
 
         if ships_objs is None:
             ship_objs = ['battleship', 'cruiser1', 'cruiser2', 'destroyer1', 'destroyer2',
-                         'destroyer3', 'submarine1', 'submarine2', 'submarine3', 'submarine4']  # List of the ships available
+                         'destroyer3', 'submarine1', 'submarine2', 'submarine3',
+                         'submarine4']  # List of the ships available
 
-        self.boards[player_1] = add_ships_to_board(self.boards[player_1], ship_objs)
-        self.boards[player_2] = add_ships_to_board(self.boards[player_2], ship_objs)
+        self.boards[0] = add_ships_to_board(self.boards[0], ship_objs)
+        self.boards[1] = add_ships_to_board(self.boards[1], ship_objs)
 
 
 class GamesHandler:
@@ -61,33 +59,45 @@ class GamesHandler:
         self.games_lst.append(game)
         self.number_of_games += 1
 
-    def start_game(self, player_1: Player, player_2: Player):
+    def start_game(self, address):
         """
         create new game with initialized random boards for each player and add it to the games list
         :param: two players who will take park of the game
         :return: the game id
         """
-        game = Game(player_1, player_2)
+        game = self.get_game_by_address(address)
+        if not game:
+            game = Game(address)
         game.init_boards()
 
         self.add_game(game)
-        return game.id
+        return game
 
-    def get_active_player_and_game_by_port(self, player_address):
+    def get_game_by_address(self, game_address) -> Game:
         """
         :param: player_port: the socket port of the player
         :return: id of active game of the player with player_port, id of player
                 if player not found return None
         """
         for game in self.games_lst:
-            if game.active == GameStatus.ACTIVE:
-                for player in game.players:
-                    if player.address[0] == player_address[0] and player.address[1] == player_address[1]:
-                        return tuple(game.id, player.id)
+            if game.active == GameStatus.ACTIVE and game.address[0] == game_address[0] and game.address[1] == game_address[1]:
+                return game
+        return None
+
+    def get_game_by_id(self, game_address):
+        """
+        :param: player_port: the socket port of the player
+        :return: id of active game of the player with player_port, id of player
+                if player not found return None
+        """
+        for game in self.games_lst:
+            if game.active == GameStatus.ACTIVE and game.address[0] == game[0] and game.address[1] == game[1]:
+                return tuple(game.id)
         return None
 
 
-def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SHIP_NAME, bool_shot_default=DEFAULT_BOOL_SHOT):
+def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SHIP_NAME,
+                           bool_shot_default=DEFAULT_BOOL_SHOT):
     """
     Function generates a list of height x width tiles. The list will contain list
     ('shipName', boolShot) set to their (default_value).
@@ -99,7 +109,7 @@ def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SH
     # for x in range(height):
     #     for y in range(width):
     #         default_tiles[x][y] = (ship_name_default, bool_shot_default)
-    #default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
+    # default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
     print(default_tiles)
     return default_tiles
 
@@ -120,7 +130,6 @@ def check_for_win(board):
     Function checks if the current board state is a winning state.
 
     board -> the board which contains the ship pieces
-    revealed -> list of revealed tiles
     returns True if all the ships are revealed
     """
     for tilex in range(len(board)):
@@ -207,14 +216,16 @@ def make_ship_position(board, x_pos, y_pos, isHorizontal, length, ship):
     if isHorizontal:
         for i in range(length):
             if (i + x_pos > 9) or (board[i + x_pos][y_pos][0] is not None) or \
-                    has_adjacent(board, i + x_pos, y_pos, ship):  # if the ship goes out of bound, hits another ship, or is adjacent to another ship
+                    has_adjacent(board, i + x_pos, y_pos,
+                                 ship):  # if the ship goes out of bound, hits another ship, or is adjacent to another ship
                 return False, ship_coordinates  # then return false
             else:
                 ship_coordinates.append((i + x_pos, y_pos))
     else:
         for i in range(length):
             if (i + y_pos > 9) or (board[x_pos][i + y_pos][0] is not None) or \
-                    has_adjacent(board, x_pos, i + y_pos, ship):  # if the ship goes out of bound, hits another ship, or is adjacent to another ship
+                    has_adjacent(board, x_pos, i + y_pos,
+                                 ship):  # if the ship goes out of bound, hits another ship, or is adjacent to another ship
                 return False, ship_coordinates  # then return false
             else:
                 ship_coordinates.append((x_pos, i + y_pos))
@@ -237,11 +248,3 @@ def has_adjacent(board, x_pos, y_pos, ship):
                     (board[x][y][0] not in (ship, None)):
                 return True
     return False
-
-
-
-
-
-
-
-

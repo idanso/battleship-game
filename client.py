@@ -46,6 +46,7 @@ messages = [b"Message 1 from client.", b"Message 2 from client."]
 #             print("socket closed")
 #             sock.close()
 
+
 def receive_data(sock):#made def incase we want to make difrent situations
     """
 
@@ -88,6 +89,7 @@ def set_socket(server_addr):
     )
     sel.register(sock, events, data=data)
     return sock
+
 
 # start_connections('127.0.0.1', 1233)
 def run_game(host, port, elem_dict):

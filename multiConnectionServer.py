@@ -1,4 +1,3 @@
-import sys
 import socket
 import selectors
 import types
@@ -8,23 +7,39 @@ import json
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
 
+
 #################
 
+def send_message(sock, data_dic):
+    try:
+        data_json = json.dumps(data_dic)
+        sock.send(data_json.encode())
+    except Exception as e:
+        print(e)
 
-def accept_wrapper(sock, ready_players):
+
+def receive_message(sock):
+    try:
+        recv_data = sock.recv(1024)
+        if recv_data:
+            json_data = bytes(recv_data).decode()
+            return json.loads(json_data)
+        else:
+            return None
+
+    except Exception as e:
+        print(e)
+        return None
+
+
+def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
     print(f"Accepted connection from {addr}")
     conn.setblocking(False)
     sock.settimeout(5)
-    data = types.SimpleNamespace(addr=addr)  # TODO: check if needed
+    data = types.SimpleNamespace(addr=addr)
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
-    if ready_players[0] is None:  # check if there is player ready for a game
-        ready_players[0] = server_service.Player(addr)
-    else:
-        ready_players[1] = server_service.Player(addr)
-    print(ready_players)
-    return ready_players
 
 
 def service_connection(key, mask):
@@ -34,21 +49,17 @@ def service_connection(key, mask):
     if mask & selectors.EVENT_READ:
         try:
             print("service_connection data address: " + str(data.addr))
-            player_data = game_handler.get_active_player_and_game_by_port(data.addr)
-
-            if player_data is None:
-                # TODO: handle error of player not found
-                pass
-            else:
-                print("player Id: " + player_data.id + ", player address: " + player_data.address)
-            recv_data = sock.recv(1024)  # Should be ready to read
+            recv_data = receive_message(sock)  # Should be ready to read
             if recv_data:
-                operation_mapper(json.loads(bytes(recv_data).decode()))
-                if mask & selectors.EVENT_WRITE:
-                    send_data = json.dumps({"action": "hellow world"})
-                    sock.send(send_data.encode())
+                operation_mapper(sock, data.addr, recv_data)
+                # if mask & selectors.EVENT_WRITE:
+                #     send_data = json.dumps({"action": "hellow world"})
+                #     sock.send(send_data.encode())
+
             else:
                 print(f"Closing connection to {data.addr}")
+                game = game_handler.get_game_by_address(data.addr)
+                game.status = server_service.GameStatus.ENDED
                 sel.unregister(sock)
                 sock.close()
 
@@ -61,8 +72,40 @@ def service_connection(key, mask):
     #         data.outb = data.outb[sent:]
 
 
-def operation_mapper(received_data):
-    print(received_data)
+# TODO: consider replacing actions string to enums
+def operation_mapper(sock, address, received_data):
+    game = game_handler.get_game_by_address(address)
+    if not game:
+        print("couldn't find game from address: %s", received_data["Address"])
+        # TODO: consider throwing error
+        return
+    if received_data["Action"] == "start_game":
+        data_dict = dict({"Action": "start_game"})
+        data_dict["Board_1"] = game.boards[0]
+        data_dict["Board_2"] = game.boards[0]
+        send_message(sock, data_dict)
+
+    elif received_data["Action"] == "attack":
+        board = game.boards[received_data["Hitted_player"]]
+        hit_res = server_service.check_revealed_tile(
+            board,
+            received_data["Location"])
+        if hit_res:
+            board[received_data["Location"][0]][received_data["Location"][1]][1] = True
+        win_res = server_service.check_for_win(board)
+        data_dict = dict({"Action": "hit", "Success": hit_res, "Finished": win_res})
+        send_message(sock, data_dict)
+
+    elif received_data["Action"] == "quit":
+        game.status = server_service.GameStatus.ENDED
+        player_num = received_data["Player"]
+        if player_num == 1:
+            game.score[0] += 1
+        else:
+            game.score[1] += 1
+    else:
+        print("unknown Action: %s", received_data["Action"])
+        # TODO: consider throwing error
 
 
 sel = selectors.DefaultSelector()
@@ -84,12 +127,7 @@ try:
         events = sel.select(timeout=None)
         for key, mask in events:
             if key.data is None:
-                ready_players = accept_wrapper(key.fileobj, ready_players)
-                if ready_players[1] is not None:  # check if there is two players ready to start game
-                    new_game_id = game_handler.start_game(ready_players[0], ready_players[1])  # create new game
-                    ready_players = [None, None]
-
-                    # TODO: send to clients their boards
+                accept_wrapper(key.fileobj)
             else:
                 service_connection(key, mask)
 except KeyboardInterrupt:
