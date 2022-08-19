@@ -95,7 +95,7 @@ def run_game(host, port, elem_dict):
 
             if tilex != None and tiley != None:
                 if not game.get_if_oponent_reveled_tile([tilex, tiley]):  # if the tile the mouse is on is not revealed
-                    send_message(sock, {"Action": "attack","Hitted_player": game., "Location": [tilex, tiley]})
+                    send_message(sock, {"Action": "attack","Hitted_player": game.rival_number(), "Location": [tilex, tiley]})
                     draw_highlight_tile(tilex, tiley, elem_dict)  # draws the hovering highlight over the tile
                 if not game.get_if_oponent_reveled_tile([tilex, tiley]) and mouse_clicked:  # if the mouse is clicked on the not revealed tile
                     reveal_tile_animation(game.get_board_of_opponent(), [(tilex, tiley)], elem_dict)
