@@ -390,14 +390,13 @@ class GamesHandler:
     def add_boards(self, board_1, board_2):
         self.players_board.extend(board_1, board_2)
 
-    def attack(self, x, y):
-        self.last_attack = [x, y]
 
-    def hit_on_board(self):
-        self.players_board[self.turn_of_player - 1][self.last_attack][1] = True
+    def hit_on_board(self, x, y):
+        self.last_attack = [x, y]
+        self.get_board_of_opponent()[x, y][1] = True
         self.change_turn()
 
-    def rival_number(self):
+    def opponent_number(self):
         if self.turn_of_player == 0:
             return 1
         else:
@@ -406,7 +405,7 @@ class GamesHandler:
     def get_board_of_opponent(self):
         return self.players_board[self.turn_of_player - 1]
 
-    def get_if_oponent_reveled_tile(self, tile):
+    def get_if_opponent_reveled_tile(self, tile):
         return self.players_board[self.turn_of_player -1][tile][1]
 
     def change_turn(self):
@@ -414,6 +413,9 @@ class GamesHandler:
             self.turn_of_player = 1
         else:
             self.turn_of_player = 0
+
+
+
 
 def operation_mapper(elem_dict, game: GamesHandler, received_data):
     print(received_data)
@@ -425,13 +427,11 @@ def operation_mapper(elem_dict, game: GamesHandler, received_data):
         #if received_data["Finished"]:
             #TODO: show result screen
         if received_data["Success"] == True:
-            reveal_tile_animation(game.players_board[game.turn_of_player - 1], game.last_attack, elem_dict, True)
+            reveal_tile_animation(game.players_board[game.opponent_number()], game.last_attack, elem_dict, True)
+            left, top = left_top_coords_tile(game.last_attack[0], game.last_attack[1])
             # blowup_animation((left, top))
         else:
-            reveal_tile_animation(game.players_board[game.turn_of_player - 1], game.last_attack, elem_dict)
-        game.hit_on_board()
-
-
+            reveal_tile_animation(game.players_board[game.opponent_number()], game.last_attack, elem_dict)
 
 
     elif received_data["Action"] == "game finished":
@@ -440,6 +440,9 @@ def operation_mapper(elem_dict, game: GamesHandler, received_data):
     else:
         print("unknown Action: %s", received_data["Action"])
         # TODO: consider throwing error
+
+
+
 
 
 def cheack_events_pygame(elem_dict, mousex, mousey):

@@ -75,7 +75,8 @@ def run_game(host, port, elem_dict):
 
         mousex, mousey = 0, 0  # location of mouse
         counter = []  # counter to track number of shots fired
-        xmarkers, ymarkers = set_markers(game.get_board_of_opponent())  # The numerical markers on each side of the board
+        xmarkers, ymarkers = set_markers(
+            game.get_board_of_opponent())  # The numerical markers on each side of the board
 
         elem_dict["DISPLAYSURF"] = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE)
 
@@ -93,19 +94,15 @@ def run_game(host, port, elem_dict):
             # Check if the mouse is clicked at a position with a ship piece
             tilex, tiley = get_tile_at_pixel(mousex, mousey)
 
-            if tilex != None and tiley != None:
-                if not game.get_if_oponent_reveled_tile([tilex, tiley]):  # if the tile the mouse is on is not revealed
-                    send_message(sock, {"Action": "attack","Hitted_player": game.rival_number(), "Location": [tilex, tiley]})
+            if tilex is not None and tiley is not None:
+                if not game.get_if_opponent_reveled_tile([tilex, tiley]):  # if the tile the mouse is on is not revealed
                     draw_highlight_tile(tilex, tiley, elem_dict)  # draws the hovering highlight over the tile
-                if not game.get_if_oponent_reveled_tile([tilex, tiley]) and mouse_clicked:  # if the mouse is clicked on the not revealed tile
-                    reveal_tile_animation(game.get_board_of_opponent(), [(tilex, tiley)], elem_dict)
-                    #my_board[tilex][tiley][1] = True  # set the tile to now be revealed
-                    if check_revealed_tile(game.get_board_of_opponent(), (tilex, tiley)):  # if the clicked position contains a ship piece
-                        left, top = left_top_coords_tile(tilex, tiley)
-                        # blowup_animation((left, top))
-                        if check_for_win(game.get_board_of_opponent()):  # check for a win
-                            counter.append((tilex, tiley))
-                            return len(counter)  # return the amount of shots taken
+                if not game.get_if_opponent_reveled_tile(
+                        [tilex, tiley]) and mouse_clicked:  # if the mouse is clicked on the not revealed tile
+                    send_message(sock, {"Action": "attack", "Hitted_player": game.opponent_number(),
+                                        "Location": [tilex, tiley]})
+                    game.hit_on_board(tilex, tiley)  # turn opponent board on position to revealed
+                    operation_mapper(elem_dict, game, receive_message(sock))
                     counter.append((tilex, tiley))
 
 
