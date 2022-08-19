@@ -49,11 +49,10 @@ HIGHLIGHTCOLOR = BLUE
 
 
 def init_elements(counter: int, elem_dict):
-    # server_addr = (host, port)
-    # sock_player1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # sock.setblocking(False)
-    # sock_player2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # sock.setblocking(False)
+    """
+            do initialization to parameters involving pygame window that need to happen in every loop of the game
+    """
+
     # counter display (it needs to be here in order to refresh it)
     elem_dict["COUNTER_SURF"] = elem_dict["BASICFONT"].render(str(len(counter)), True, WHITE)
     elem_dict["COUNTER_RECT"] = elem_dict["SHOTS_SURF"].get_rect()
@@ -71,6 +70,9 @@ def init_elements(counter: int, elem_dict):
     return elem_dict
 
 def set_window(elem_dict):
+    """
+        do initialization to parameters involving pygame window that happens only once at start
+    """
     window_H = WINDOWHEIGHT
     window_W = WINDOWWIDTH
 
@@ -117,16 +119,17 @@ def blowup_animation(coord, elem_dict):
         elem_dict["FPSCLOCK"].tick(EXPLOSIONSPEED)  # Determine the delay to play the image with
 
 
-def draw_tile_covers(board, tile, coverage, elem_dict):
+def draw_tile_covers(board, tile, coverage, elem_dict, hit:bool = False):
     """
     Function draws the tiles according to a set of variables.
 
     board -> list; of board tiles
     tile -> tuple; of tile coords to reveal
     coverage -> int; amount of the tile that is covered
+    hit -> did the tile contained a ship that was hit
     """
     left, top = left_top_coords_tile(tile[0], tile[1])
-    if check_revealed_tile(board, tile):
+    if hit:
         pygame.draw.rect(elem_dict["DISPLAYSURF"], SHIPCOLOR, (left, top, TILESIZE,
                                                   TILESIZE))
     else:
@@ -140,7 +143,7 @@ def draw_tile_covers(board, tile, coverage, elem_dict):
     elem_dict["FPSCLOCK"].tick(FPS)
 
 
-def reveal_tile_animation(board, tile_to_reveal, elem_dict):
+def reveal_tile_animation(board, tile_to_reveal, elem_dict, hit:bool = False):
     """
     Function creates an animation which plays when the mouse is clicked on a tile, and whatever is
     behind the tile needs to be revealed.
@@ -149,7 +152,7 @@ def reveal_tile_animation(board, tile_to_reveal, elem_dict):
     tile_to_reveal -> tuple of tile coords to apply the reveal animation to
     """
     for coverage in range(TILESIZE, (-REVEALSPEED) - 1, -REVEALSPEED):  # Plays animation based on reveal speed
-        draw_tile_covers(board, tile_to_reveal[0], coverage, elem_dict)
+        draw_tile_covers(board, tile_to_reveal[0], coverage, elem_dict, hit)
 
 
 def draw_board(board, elem_dict, my_board: bool):
@@ -377,4 +380,85 @@ def show_gameover_screen(shots_fired, elem_dict):
         pygame.display.update()
         elem_dict["FPSCLOCK"].tick()
 
+class GamesHandler:
+    def __init__(self):
+        #Todo add name?
+        self.players_board = []
+        self.turn_of_player = random.randint(0, 1)
+        self.last_attack = None
+
+    def add_boards(self, board_1, board_2):
+        self.players_board.extend(board_1, board_2)
+
+    def attack(self, x, y):
+        self.last_attack = [x, y]
+
+    def hit_on_board(self):
+        self.players_board[self.turn_of_player - 1][self.last_attack][1] = True
+        self.change_turn()
+
+    def rival_number(self):
+        if self.turn_of_player == 0:
+            return 1
+        else:
+            return 0
+
+    def get_board_of_opponent(self):
+        return self.players_board[self.turn_of_player - 1]
+
+    def get_if_oponent_reveled_tile(self, tile):
+        return self.players_board[self.turn_of_player -1][tile][1]
+
+    def change_turn(self):
+        if self.turn_of_player == 0:
+            self.turn_of_player = 1
+        else:
+            self.turn_of_player = 0
+
+def operation_mapper(elem_dict, game: GamesHandler, received_data):
+    print(received_data)
+    if received_data["Action"] == "start_game":
+        game.add_boards(received_data["Board_1"], received_data["Board_2"])
+
+
+    elif received_data["Action"] == "hit":
+        #if received_data["Finished"]:
+            #TODO: show result screen
+        if received_data["Success"] == True:
+            reveal_tile_animation(game.players_board[game.turn_of_player - 1], game.last_attack, elem_dict, True)
+            # blowup_animation((left, top))
+        else:
+            reveal_tile_animation(game.players_board[game.turn_of_player - 1], game.last_attack, elem_dict)
+        game.hit_on_board()
+
+
+
+
+    elif received_data["Action"] == "game finished":
+        pygame.quit()
+        sys.exit()
+    else:
+        print("unknown Action: %s", received_data["Action"])
+        # TODO: consider throwing error
+
+
+def cheack_events_pygame(elem_dict, mousex, mousey):
+    # Set the title in the menu bar to 'Battleship'
+    for event in pygame.event.get():
+        if event.type == pygame.VIDEORESIZE:
+            elem_dict["DISPLAYSURF"] = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+        if event.type == MOUSEBUTTONUP:
+            if elem_dict["HELP_RECT"].collidepoint(event.pos):  # if the help button is clicked on
+                elem_dict["DISPLAYSURF"].fill(BGCOLOR)
+                show_help_screen(elem_dict)  # Show the help screen
+            elif elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
+                1
+                #todo: new game button
+                #run_game('127.0.0.1', 1233, elem_dict)  # goto main, which resets the game
+            else:  # otherwise
+                mousex, mousey = event.pos  # set mouse positions to the new position
+                mouse_clicked = True  # mouse is clicked but not on a button
+        elif event.type == MOUSEMOTION:  # Detected mouse motion
+            mousex, mousey = event.pos  # set mouse positions to the new position
+        return mousex, mousey, mouse_clicked
 # main()
