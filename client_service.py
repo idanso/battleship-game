@@ -1,41 +1,42 @@
 import random, sys, pygame
-
+from shared import *
 from cffi.backend_ctypes import xrange
 from pygame.locals import *
-from server_service import check_revealed_tile # TODO: delete after testing
+from server_service import check_revealed_tile  # TODO: delete after testing
 
 # Set variables, like screen width and height
 # globals
 
 
-FPS = 30 #Determines the number of frames per second
-REVEALSPEED = 8 #Determines the speed at which the squares reveals after being clicked
-WINDOWWIDTH = 800 #Width of game window
-WINDOWHEIGHT = 600 #Height of game window
-TILESIZE = 40 #Size of the squares in each grid(tile)
-MARKERSIZE = 40 #Size of the box which contatins the number that indicates how many ships in this row/col
-BUTTONHEIGHT = 20 #Height of a standard button
-BUTTONWIDTH = 40 #Width of a standard button
-TEXT_HEIGHT = 25 #Size of the text
-TEXT_LEFT_POSN = 10 #Where the text will be positioned
-BOARDWIDTH = 10 #Number of grids horizontally
-BOARDHEIGHT = 10 #Number of grids vertically
-DISPLAYWIDTH = 200 #Width of the game board
-EXPLOSIONSPEED = 10 #How fast the explosion graphics will play
+FPS = 30  # Determines the number of frames per second
+REVEALSPEED = 8  # Determines the speed at which the squares reveals after being clicked
+WINDOWWIDTH = 800  # Width of game window
+WINDOWHEIGHT = 600  # Height of game window
+TILESIZE = 40  # Size of the squares in each grid(tile)
+MARKERSIZE = 40  # Size of the box which contatins the number that indicates how many ships in this row/col
+BUTTONHEIGHT = 20  # Height of a standard button
+BUTTONWIDTH = 40  # Width of a standard button
+TEXT_HEIGHT = 25  # Size of the text
+TEXT_LEFT_POSN = 10  # Where the text will be positioned
+BOARDWIDTH = 10  # Number of grids horizontally
+BOARDHEIGHT = 10  # Number of grids vertically
+DISPLAYWIDTH = 200  # Width of the game board
+EXPLOSIONSPEED = 10  # How fast the explosion graphics will play
 
-XMARGIN = int((WINDOWWIDTH - (BOARDWIDTH * TILESIZE) - DISPLAYWIDTH - MARKERSIZE) / 2) #x-position of the top left corner of board
-YMARGIN = int((WINDOWHEIGHT - (BOARDHEIGHT * TILESIZE) - MARKERSIZE) / 2) #y-position of the top left corner of board
+XMARGIN = int((WINDOWWIDTH - (
+            BOARDWIDTH * TILESIZE) - DISPLAYWIDTH - MARKERSIZE) / 2)  # x-position of the top left corner of board
+YMARGIN = int((WINDOWHEIGHT - (BOARDHEIGHT * TILESIZE) - MARKERSIZE) / 2)  # y-position of the top left corner of board
 
-#Colours which will be used by the game
-BLACK   = (  0,   0,   0)
-WHITE   = (255, 255, 255)
-GREEN   = (  0, 204,   0)
-GRAY    = ( 60,  60,  60)
-BLUE    = (  0,  50, 255)
-YELLOW  = (255, 255,   0)
-DARKGRAY =( 40,  40,  40)
+# Colours which will be used by the game
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 204, 0)
+GRAY = (60, 60, 60)
+BLUE = (0, 50, 255)
+YELLOW = (255, 255, 0)
+DARKGRAY = (40, 40, 40)
 
-#Determine what to colour each element of the game
+# Determine what to colour each element of the game
 BGCOLOR = GRAY
 BUTTONCOLOR = GREEN
 TEXTCOLOR = WHITE
@@ -44,8 +45,6 @@ BORDERCOLOR = BLUE
 TEXTSHADOWCOLOR = BLUE
 SHIPCOLOR = YELLOW
 HIGHLIGHTCOLOR = BLUE
-
-
 
 
 def init_elements(counter: int, elem_dict):
@@ -58,7 +57,6 @@ def init_elements(counter: int, elem_dict):
     elem_dict["COUNTER_RECT"] = elem_dict["SHOTS_SURF"].get_rect()
     elem_dict["COUNTER_RECT"].topleft = (WINDOWWIDTH - 680, WINDOWHEIGHT - 570)
 
-
     # Fill background
     elem_dict["DISPLAYSURF"].fill(BGCOLOR)
 
@@ -69,13 +67,13 @@ def init_elements(counter: int, elem_dict):
     elem_dict["DISPLAYSURF"].blit(elem_dict["COUNTER_SURF"], elem_dict["COUNTER_RECT"])
     return elem_dict
 
+
 def set_window(elem_dict):
     """
         do initialization to parameters involving pygame window that happens only once at start
     """
     window_H = WINDOWHEIGHT
     window_W = WINDOWWIDTH
-
 
     pygame.init()
 
@@ -99,11 +97,12 @@ def set_window(elem_dict):
     elem_dict["SHOTS_RECT"].topleft = (window_W - 750, window_H - 570)
 
     # Load the explosion graphics from the /img folder
-    # elem_dict["EXPLOSION_IMAGES"] = [
-    #     pygame.image.load("img/blowup1.png"), pygame.image.load("img/blowup2.png"),
-    #     pygame.image.load("img/blowup3.png"), pygame.image.load("img/blowup4.png"),
-    #     pygame.image.load("img/blowup5.png"), pygame.image.load("img/blowup6.png")]
+    elem_dict["EXPLOSION_IMAGES"] = [
+        pygame.image.load("img/blowup1.png"), pygame.image.load("img/blowup2.png"),
+        pygame.image.load("img/blowup3.png"), pygame.image.load("img/blowup4.png"),
+        pygame.image.load("img/blowup5.png"), pygame.image.load("img/blowup6.png")]
     return elem_dict
+
 
 def blowup_animation(coord, elem_dict):
     """
@@ -111,7 +110,8 @@ def blowup_animation(coord, elem_dict):
 
     coord -> tuple of tile coords to apply the blowup animation
     """
-    for image in elem_dict["EXPLOSION_IMAGES"]:  # go through the list of images in the list of pictures and play them in sequence
+    for image in elem_dict[
+        "EXPLOSION_IMAGES"]:  # go through the list of images in the list of pictures and play them in sequence
         # Determine the location and size to display the image
         image = pygame.transform.scale(image, (TILESIZE + 10, TILESIZE + 10))
         elem_dict["DISPLAYSURF"].blit(image, coord)
@@ -119,7 +119,7 @@ def blowup_animation(coord, elem_dict):
         elem_dict["FPSCLOCK"].tick(EXPLOSIONSPEED)  # Determine the delay to play the image with
 
 
-def draw_tile_covers(board, tile, coverage, elem_dict, hit:bool = False):
+def draw_tile_covers(board, tile, coverage, elem_dict, hit= False):
     """
     Function draws the tiles according to a set of variables.
 
@@ -131,19 +131,19 @@ def draw_tile_covers(board, tile, coverage, elem_dict, hit:bool = False):
     left, top = left_top_coords_tile(tile[0], tile[1])
     if hit:
         pygame.draw.rect(elem_dict["DISPLAYSURF"], SHIPCOLOR, (left, top, TILESIZE,
-                                                  TILESIZE))
+                                                               TILESIZE))
     else:
         pygame.draw.rect(elem_dict["DISPLAYSURF"], BGCOLOR, (left, top, TILESIZE,
-                                                TILESIZE))
+                                                             TILESIZE))
     if coverage > 0:
         pygame.draw.rect(elem_dict["DISPLAYSURF"], TILECOLOR, (left, top, coverage,
-                                                  TILESIZE))
+                                                               TILESIZE))
 
     pygame.display.update()
     elem_dict["FPSCLOCK"].tick(FPS)
 
 
-def reveal_tile_animation(board, tile_to_reveal, elem_dict, hit:bool = False):
+def reveal_tile_animation(board, tile_to_reveal, elem_dict, hit = False):
     """
     Function creates an animation which plays when the mouse is clicked on a tile, and whatever is
     behind the tile needs to be revealed.
@@ -152,7 +152,7 @@ def reveal_tile_animation(board, tile_to_reveal, elem_dict, hit:bool = False):
     tile_to_reveal -> tuple of tile coords to apply the reveal animation to
     """
     for coverage in range(TILESIZE, (-REVEALSPEED) - 1, -REVEALSPEED):  # Plays animation based on reveal speed
-        draw_tile_covers(board, tile_to_reveal[0], coverage, elem_dict, hit)
+        draw_tile_covers(board, tile_to_reveal, coverage, elem_dict, hit)
 
 
 def draw_board(board, elem_dict, my_board: bool):
@@ -168,24 +168,26 @@ def draw_board(board, elem_dict, my_board: bool):
             left, top = left_top_coords_tile(tilex, tiley)
             if not board[tilex][tiley][1] and not my_board:
                 pygame.draw.rect(elem_dict["DISPLAYSURF"], TILECOLOR, (left, top, TILESIZE,
-                                                          TILESIZE))
+                                                                       TILESIZE))
             else:
                 if board[tilex][tiley][0] is not None:
                     pygame.draw.rect(elem_dict["DISPLAYSURF"], SHIPCOLOR, (left, top,
-                                                              TILESIZE, TILESIZE))
+                                                                           TILESIZE, TILESIZE))
                 else:
                     pygame.draw.rect(elem_dict["DISPLAYSURF"], BGCOLOR, (left, top,
-                                                            TILESIZE, TILESIZE))
+                                                                         TILESIZE, TILESIZE))
     # draws the horizontal lines
     for x in range(0, (BOARDWIDTH + 1) * TILESIZE, TILESIZE):
         pygame.draw.line(elem_dict["DISPLAYSURF"], DARKGRAY, (x + XMARGIN + MARKERSIZE,
-                                                 YMARGIN + MARKERSIZE), (x + XMARGIN + MARKERSIZE,
-                                                                         WINDOWHEIGHT - YMARGIN))
+                                                              YMARGIN + MARKERSIZE), (x + XMARGIN + MARKERSIZE,
+                                                                                      WINDOWHEIGHT - YMARGIN))
     # draws the vertical lines
     for y in range(0, (BOARDHEIGHT + 1) * TILESIZE, TILESIZE):
         pygame.draw.line(elem_dict["DISPLAYSURF"], DARKGRAY, (XMARGIN + MARKERSIZE, y +
-                                                 YMARGIN + MARKERSIZE), (WINDOWWIDTH - (DISPLAYWIDTH + MARKERSIZE *
-                                                                                        2), y + YMARGIN + MARKERSIZE))
+                                                              YMARGIN + MARKERSIZE),
+                         (WINDOWWIDTH - (DISPLAYWIDTH + MARKERSIZE *
+                                         2), y + YMARGIN + MARKERSIZE))
+
 
 def check_for_quit():
     """
@@ -218,6 +220,7 @@ def set_markers(board):
 
     return xmarkers, ymarkers
 
+
 def draw_markers(xlist, ylist, elem_dict):
     """
     Function draws the two list of markers to the side of the board.
@@ -225,18 +228,18 @@ def draw_markers(xlist, ylist, elem_dict):
     xlist -> list of row markers
     ylist -> list of column markers
     """
-    for i in range(len(xlist)): #Draw the x-marker list
+    for i in range(len(xlist)):  # Draw the x-marker list
         left = i * MARKERSIZE + XMARGIN + MARKERSIZE + (TILESIZE / 3)
         top = YMARGIN
         marker_surf, marker_rect = make_text_objs(str(xlist[i]),
-                                                    elem_dict["BASICFONT"], TEXTCOLOR)
+                                                  elem_dict["BASICFONT"], TEXTCOLOR)
         marker_rect.topleft = (left, top)
         elem_dict["DISPLAYSURF"].blit(marker_surf, marker_rect)
-    for i in range(len(ylist)): #Draw the y-marker list
+    for i in range(len(ylist)):  # Draw the y-marker list
         left = XMARGIN
         top = i * MARKERSIZE + YMARGIN + MARKERSIZE + (TILESIZE / 3)
         marker_surf, marker_rect = make_text_objs(str(ylist[i]),
-                                                    elem_dict["BASICFONT"], TEXTCOLOR)
+                                                  elem_dict["BASICFONT"], TEXTCOLOR)
         marker_rect.topleft = (left, top)
         elem_dict["DISPLAYSURF"].blit(marker_surf, marker_rect)
 
@@ -299,12 +302,14 @@ def show_help_screen(elem_dict):
     elem_dict["DISPLAYSURF"].blit(line2_surf, line2_rect)
 
     line3_surf, line3_rect = make_text_objs('shots as possible. The markers on' \
-                                            ' the edges of the game board tell you how', elem_dict["BASICFONT"], TEXTCOLOR)
+                                            ' the edges of the game board tell you how', elem_dict["BASICFONT"],
+                                            TEXTCOLOR)
     line3_rect.topleft = (TEXT_LEFT_POSN, TEXT_HEIGHT * 4)
     elem_dict["DISPLAYSURF"].blit(line3_surf, line3_rect)
 
     line4_surf, line4_rect = make_text_objs('many ship pieces are in each' \
-                                            ' column and row. To reset your game click on', elem_dict["BASICFONT"], TEXTCOLOR)
+                                            ' column and row. To reset your game click on', elem_dict["BASICFONT"],
+                                            TEXTCOLOR)
     line4_rect.topleft = (TEXT_LEFT_POSN, TEXT_HEIGHT * 5)
     elem_dict["DISPLAYSURF"].blit(line4_surf, line4_rect)
 
@@ -383,7 +388,7 @@ def show_gameover_screen(shots_fired, elem_dict):
 
 class ClientGamesHandler:
     def __init__(self):
-        #Todo add name?
+        # Todo add name?
         self.players_board = [None, None]
         self.turn_of_player = random.randint(0, 1)
         self.last_attack = None
@@ -391,7 +396,6 @@ class ClientGamesHandler:
     def set_boards(self, board_1, board_2):
         self.players_board[0] = board_1
         self.players_board[1] = board_2
-
 
     def hit_on_board(self, x, y):
         self.last_attack = [x, y]
@@ -408,7 +412,7 @@ class ClientGamesHandler:
         return self.players_board[self.turn_of_player - 1]
 
     def get_if_opponent_reveled_tile(self, tile):
-        return self.players_board[self.turn_of_player -1][tile[0]][tile[1]][1]
+        return self.get_board_of_opponent()[tile[0]][tile[1]][1]
 
     def change_turn(self):
         if self.turn_of_player == 0:
@@ -417,20 +421,23 @@ class ClientGamesHandler:
             self.turn_of_player = 0
 
 
-def operation_mapper(elem_dict, game: ClientGamesHandler, received_data):
-    print(received_data)
+def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = None):
+
     if received_data["Action"] == "start_game":
         game.add_boards(received_data["Board_1"], received_data["Board_2"])
 
     elif received_data["Action"] == "hit":
-        #if received_data["Finished"]:
-            #TODO: show result screen
         if received_data["Success"] == True:
             reveal_tile_animation(game.players_board[game.opponent_number()], game.last_attack, elem_dict, True)
             left, top = left_top_coords_tile(game.last_attack[0], game.last_attack[1])
-            # blowup_animation((left, top))
+            blowup_animation((left, top), elem_dict)
         else:
             reveal_tile_animation(game.players_board[game.opponent_number()], game.last_attack, elem_dict)
+
+        if received_data["Finished"]:
+            print("Game ended")
+            start_new_game(game, sock)
+            # TODO: show result screen
 
 
     elif received_data["Action"] == "game finished":
@@ -440,6 +447,9 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data):
         print("unknown Action: %s", received_data["Action"])
         # TODO: consider throwing error
 
-
-
+def start_new_game(game, sock):
+    send_message(sock, {"Action": "start_game"})
+    # get board
+    recv_data = receive_message(sock)
+    game.set_boards(recv_data["Board_1"], recv_data["Board_2"])
 # main()
