@@ -30,26 +30,8 @@ def service_connection(key, mask):
             recv_data = receive_message(sock)  # Should be ready to read
             if recv_data:
                 operation_mapper(sock, data.addr, recv_data)
-                # if mask & selectors.EVENT_WRITE:
-                #     send_data = json.dumps({"action": "hellow world"})
-                #     sock.send(send_data.encode())
-
-            else:
-                # print(f"Closing connection to {data.addr}")
-                # game = game_handler.get_game_by_address(data.addr)
-                # game.status = server_service.GameStatus.ENDED
-                # sel.unregister(sock)
-                # sock.close()
-                pass
-
         except Exception as e:
-            print("exception!!!")
             print(e)
-    # if mask & selectors.EVENT_WRITE:
-    #     if data.outb:
-    #         print(f"Echoing {data.outb!r} to {data.addr}")
-    #         sent = sock.send(f"Echoing {data.outb!r} to {data.addr}".encode())  # Should be ready to write
-    #         data.outb = data.outb[sent:]
 
 
 # TODO: consider replacing actions string to enums
@@ -85,14 +67,6 @@ def operation_mapper(sock, address, received_data):
                     game.status = server_service.GameStatus.ENDED
             data_dict = dict({"Action": "hit", "Success": hit_res, "Finished": win_res})
             send_message(sock, data_dict)
-
-        elif received_data["Action"] == "quit":
-            game.status = server_service.GameStatus.ENDED
-            player_num = received_data["Player"]
-            if player_num == 1:
-                game.score[0] += 1
-            else:
-                game.score[1] += 1
         elif received_data["Action"] == "scores":
             scores = game.score
             data_dict = dict({"Action": "hit", "Scores": scores})

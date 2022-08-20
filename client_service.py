@@ -455,6 +455,7 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
         print("unknown Action: %s", received_data["Action"])
         # TODO: consider throwing error
 
+
 def start_new_game(game, sock, quit = False):
     """
     this function is used to send to the server that the client is starting a new game and receive from the server
