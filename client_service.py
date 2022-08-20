@@ -422,7 +422,15 @@ class ClientGamesHandler:
 
 
 def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = None):
+    """
+    this function is used to map the different actions that were received from the server with there corresponding actions
 
+    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+    game-> of type ClientGamesHandler, is used to keep up with important things involving the game like board, player turn and
+    etc...
+    received_data-> the dict that was received from the server
+    sock -> the socket object used to send data to the server
+    """
     if received_data["Action"] == "start_game":
         game.add_boards(received_data["Board_1"], received_data["Board_2"])
 
@@ -447,8 +455,22 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
         print("unknown Action: %s", received_data["Action"])
         # TODO: consider throwing error
 
-def start_new_game(game, sock):
-    send_message(sock, {"Action": "start_game"})
+def start_new_game(game, sock, quit = False):
+    """
+    this function is used to send to the server that the client is starting a new game and receive from the server
+    the new boards
+
+        elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+        game-> of typeClientGamesHandler, is used to keep up with important things involving the game like board, player turn and
+        etc...
+        received_data-> the dict that was received from the server
+        sock -> the socket object used to send data to the server
+        """
+    if quit:
+        data = {"Action": "start_game", "Quit": game.turn_of_player}
+    else:
+        data = {"Action": "start_game", "Quit": None}
+    send_message(sock, data)
     # get board
     recv_data = receive_message(sock)
     game.set_boards(recv_data["Board_1"], recv_data["Board_2"])

@@ -24,8 +24,7 @@ def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
                 elem_dict["DISPLAYSURF"].fill(BGCOLOR)
                 show_help_screen(elem_dict)  # Show the help screen
             elif elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
-                send_message(sock, {"Action": "quit", "Player": game.turn_of_player})
-                start_new_game(game, sock)
+                start_new_game(game, sock, True)
 
                 #todo: new game button
                 #run_game('127.0.0.1', 1233, elem_dict)  # goto main, which resets the game
