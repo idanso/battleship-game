@@ -7,13 +7,9 @@ client to server:
 }
 
 {
-	"Action": quit,
-	"Player": 1
-}
-
-{
 	"Action": "start game",
-	"Player_name":["idan", "shiran"]
+	"Player_name":["idan", "shiran"],
+	"Quit": 2 // 0- first player quit, 1- second player quit, else- no one quit
 }
 
 {

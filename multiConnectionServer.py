@@ -43,6 +43,7 @@ def service_connection(key, mask):
                 pass
 
         except Exception as e:
+            print("exception!!!")
             print(e)
     # if mask & selectors.EVENT_WRITE:
     #     if data.outb:
@@ -55,6 +56,10 @@ def service_connection(key, mask):
 def operation_mapper(sock, address, received_data):
     if received_data["Action"] == "start_game":
         game = game_handler.start_game(address)
+        if received_data["Quit"] == 0:
+            game.score[1] += 1
+        elif received_data["Quit"] == 1:
+            game.score[0] += 1
         print("result of game from address: %s, is: %s", str(game.address), str(game.score))
         data_dict = dict({"Action": "start_game"})
         data_dict["Board_1"] = game.boards[0]
@@ -66,8 +71,7 @@ def operation_mapper(sock, address, received_data):
             print("couldn't find game from address: %s", received_data["Address"])
             # TODO: consider throwing error
             return
-
-        elif received_data["Action"] == "attack":
+        if received_data["Action"] == "attack":
             board = game.boards[received_data["Hitted_player"]]
             hit_res = server_service.check_revealed_tile(
                 board,
@@ -121,7 +125,6 @@ sel.register(lsock, selectors.EVENT_READ, data=None)
 try:
     while True:
         events = sel.select(timeout=None)
-
         for key, mask in events:
             if key.data is None:
                 accept_wrapper(key.fileobj)
