@@ -13,7 +13,7 @@ sel = selectors.DefaultSelector()
 messages = [b"Message 1 from client.", b"Message 2 from client."]
 
 
-def check_events_pygame(elem_dict, mousex, mousey):
+def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
     # Set the title in the menu bar to 'Battleship'
     mouse_clicked = False
     for event in pygame.event.get():
@@ -24,7 +24,9 @@ def check_events_pygame(elem_dict, mousex, mousey):
                 elem_dict["DISPLAYSURF"].fill(BGCOLOR)
                 show_help_screen(elem_dict)  # Show the help screen
             elif elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
-                pass
+                send_message(sock, {"Action": "quit", "Player": game.turn_of_player})
+                start_new_game(game, sock)
+
                 #todo: new game button
                 #run_game('127.0.0.1', 1233, elem_dict)  # goto main, which resets the game
             else:  # otherwise
@@ -90,10 +92,7 @@ def run_game(host, port, elem_dict):
     run = True
     try:
         game = ClientGamesHandler()
-        send_message(sock, {"Action": "start_game"})
-        # get board
-        recv_data = receive_message(sock)
-        game.set_boards(recv_data["Board_1"], recv_data["Board_2"])
+        start_new_game(game, sock)
         #operation_mapper(elem_dict, game, recv_data)
         mousex, mousey = 0, 0  # location of mouse
         counter = []  # counter to track number of shots fired
@@ -111,7 +110,7 @@ def run_game(host, port, elem_dict):
 
             run = check_for_quit()
 
-            mousex, mousey, mouse_clicked = check_events_pygame(elem_dict, mousex, mousey)
+            mousex, mousey, mouse_clicked = check_events_pygame(elem_dict, mousex, mousey, sock, game)
             # Check if the mouse is clicked at a position with a ship piece
             tilex, tiley = get_tile_at_pixel(mousex, mousey)
 
@@ -123,7 +122,7 @@ def run_game(host, port, elem_dict):
                     send_message(sock, {"Action": "attack", "Hitted_player": game.opponent_number(),
                                         "Location": [tilex, tiley]})
                     game.hit_on_board(tilex, tiley)  # turn opponent board on position to revealed
-                    operation_mapper(elem_dict, game, receive_message(sock))
+                    operation_mapper(elem_dict, game, receive_message(sock), sock)
                     counter.append((tilex, tiley))
 
     finally:
