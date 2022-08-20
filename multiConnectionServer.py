@@ -55,6 +55,7 @@ def service_connection(key, mask):
 def operation_mapper(sock, address, received_data):
     if received_data["Action"] == "start_game":
         game = game_handler.start_game(address)
+        print("result of game from address: %s, is: %s", str(game.address), str(game.score))
         data_dict = dict({"Action": "start_game"})
         data_dict["Board_1"] = game.boards[0]
         data_dict["Board_2"] = game.boards[0]
@@ -79,7 +80,6 @@ def operation_mapper(sock, address, received_data):
                     game.score[0] += 1
                     game.status = server_service.GameStatus.ENDED
             data_dict = dict({"Action": "hit", "Success": hit_res, "Finished": win_res})
-
             send_message(sock, data_dict)
 
         elif received_data["Action"] == "quit":
@@ -89,6 +89,11 @@ def operation_mapper(sock, address, received_data):
                 game.score[0] += 1
             else:
                 game.score[1] += 1
+        elif received_data["Action"] == "scores":
+            scores = game.score
+            data_dict = dict({"Action": "hit", "Scores": scores})
+            send_message(sock, data_dict)
+
         elif received_data["Action"] == "close_connection":
             print(f"Closing connection to {address}")
             game = game_handler.get_game_by_address(address)
