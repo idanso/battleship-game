@@ -128,7 +128,7 @@ def run_game(host, port, elem_dict):
 
     finally:
         data_dict = dict({"Action": "close_connection"})
-        send_message(data_dict)
+        send_message(sock, data_dict)
         print("socket closed")
         sock.close()
 

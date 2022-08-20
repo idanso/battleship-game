@@ -80,7 +80,7 @@ class ServerGamesHandler:
                 if player not found return None
         """
         for game in self.games_lst:
-            if game.active == GameStatus.ACTIVE and game.address[0] == game_address[0] and game.address[1] == game_address[1]:
+            if game.status == GameStatus.ACTIVE and game.address[0] == game_address[0] and game.address[1] == game_address[1]:
                 return game
         return None
 
@@ -91,7 +91,7 @@ class ServerGamesHandler:
                 if player not found return None
         """
         for game in self.games_lst:
-            if game.active == GameStatus.ACTIVE and game.address[0] == game[0] and game.address[1] == game[1]:
+            if game.status == GameStatus.ACTIVE and game.address[0] == game[0] and game.address[1] == game[1]:
                 return tuple(game.id)
         return None
 
