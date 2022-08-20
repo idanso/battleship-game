@@ -6,12 +6,33 @@ import types
 from time import sleep
 import pygame
 from client_service import *
-from server_service import *
 from pygame.locals import *
 from shared import *
 
 sel = selectors.DefaultSelector()
 messages = [b"Message 1 from client.", b"Message 2 from client."]
+
+
+def check_events_pygame(elem_dict, mousex, mousey):
+    # Set the title in the menu bar to 'Battleship'
+    mouse_clicked = False
+    for event in pygame.event.get():
+        if event.type == pygame.VIDEORESIZE:
+            elem_dict["DISPLAYSURF"] = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+        if event.type == MOUSEBUTTONUP:
+            if elem_dict["HELP_RECT"].collidepoint(event.pos):  # if the help button is clicked on
+                elem_dict["DISPLAYSURF"].fill(BGCOLOR)
+                show_help_screen(elem_dict)  # Show the help screen
+            elif elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
+                pass
+                #todo: new game button
+                #run_game('127.0.0.1', 1233, elem_dict)  # goto main, which resets the game
+            else:  # otherwise
+                mousex, mousey = event.pos  # set mouse positions to the new position
+                mouse_clicked = True  # mouse is clicked but not on a button
+        elif event.type == MOUSEMOTION:  # Detected mouse motion
+            mousex, mousey = event.pos  # set mouse positions to the new position
+    return mousex, mousey, mouse_clicked
 
 
 # def start_connections(host, port):
@@ -49,7 +70,7 @@ messages = [b"Message 1 from client.", b"Message 2 from client."]
 def set_socket(server_addr):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
-    sock.settimeout(5)
+    sock.settimeout(200)
     sock.connect_ex(server_addr)
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     data = types.SimpleNamespace(
@@ -68,11 +89,12 @@ def run_game(host, port, elem_dict):
     sock = set_socket(server_addr)
     run = True
     try:
-        game = GamesHandler()
+        game = ClientGamesHandler()
         send_message(sock, {"Action": "start_game"})
         # get board
-        operation_mapper(elem_dict, game, receive_message(sock))
-
+        recv_data = receive_message(sock)
+        game.set_boards(recv_data["Board_1"], recv_data["Board_2"])
+        #operation_mapper(elem_dict, game, recv_data)
         mousex, mousey = 0, 0  # location of mouse
         counter = []  # counter to track number of shots fired
         xmarkers, ymarkers = set_markers(
@@ -87,10 +109,9 @@ def run_game(host, port, elem_dict):
             draw_markers(xmarkers, ymarkers, elem_dict)
             pygame.display.update()
 
-            mouse_clicked = False
             run = check_for_quit()
 
-            mousex, mousey, mouse_clicked = cheack_events_pygame(elem_dict, mousex, mousey)
+            mousex, mousey, mouse_clicked = check_events_pygame(elem_dict, mousex, mousey)
             # Check if the mouse is clicked at a position with a ship piece
             tilex, tiley = get_tile_at_pixel(mousex, mousey)
 
@@ -105,8 +126,9 @@ def run_game(host, port, elem_dict):
                     operation_mapper(elem_dict, game, receive_message(sock))
                     counter.append((tilex, tiley))
 
-
     finally:
+        data_dict = dict({"Action": "close_connection"})
+        send_message(data_dict)
         print("socket closed")
         sock.close()
 

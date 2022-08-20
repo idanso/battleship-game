@@ -380,20 +380,22 @@ def show_gameover_screen(shots_fired, elem_dict):
         pygame.display.update()
         elem_dict["FPSCLOCK"].tick()
 
-class GamesHandler:
+
+class ClientGamesHandler:
     def __init__(self):
         #Todo add name?
-        self.players_board = []
+        self.players_board = [None, None]
         self.turn_of_player = random.randint(0, 1)
         self.last_attack = None
 
-    def add_boards(self, board_1, board_2):
-        self.players_board.extend(board_1, board_2)
+    def set_boards(self, board_1, board_2):
+        self.players_board[0] = board_1
+        self.players_board[1] = board_2
 
 
     def hit_on_board(self, x, y):
         self.last_attack = [x, y]
-        self.get_board_of_opponent()[x, y][1] = True
+        self.get_board_of_opponent()[x][y][1] = True
         self.change_turn()
 
     def opponent_number(self):
@@ -406,7 +408,7 @@ class GamesHandler:
         return self.players_board[self.turn_of_player - 1]
 
     def get_if_opponent_reveled_tile(self, tile):
-        return self.players_board[self.turn_of_player -1][tile][1]
+        return self.players_board[self.turn_of_player -1][tile[0]][tile[1]][1]
 
     def change_turn(self):
         if self.turn_of_player == 0:
@@ -415,13 +417,10 @@ class GamesHandler:
             self.turn_of_player = 0
 
 
-
-
-def operation_mapper(elem_dict, game: GamesHandler, received_data):
+def operation_mapper(elem_dict, game: ClientGamesHandler, received_data):
     print(received_data)
     if received_data["Action"] == "start_game":
         game.add_boards(received_data["Board_1"], received_data["Board_2"])
-
 
     elif received_data["Action"] == "hit":
         #if received_data["Finished"]:
@@ -443,25 +442,4 @@ def operation_mapper(elem_dict, game: GamesHandler, received_data):
 
 
 
-
-
-def cheack_events_pygame(elem_dict, mousex, mousey):
-    # Set the title in the menu bar to 'Battleship'
-    for event in pygame.event.get():
-        if event.type == pygame.VIDEORESIZE:
-            elem_dict["DISPLAYSURF"] = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
-        if event.type == MOUSEBUTTONUP:
-            if elem_dict["HELP_RECT"].collidepoint(event.pos):  # if the help button is clicked on
-                elem_dict["DISPLAYSURF"].fill(BGCOLOR)
-                show_help_screen(elem_dict)  # Show the help screen
-            elif elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
-                1
-                #todo: new game button
-                #run_game('127.0.0.1', 1233, elem_dict)  # goto main, which resets the game
-            else:  # otherwise
-                mousex, mousey = event.pos  # set mouse positions to the new position
-                mouse_clicked = True  # mouse is clicked but not on a button
-        elif event.type == MOUSEMOTION:  # Detected mouse motion
-            mousex, mousey = event.pos  # set mouse positions to the new position
-        return mousex, mousey, mouse_clicked
 # main()

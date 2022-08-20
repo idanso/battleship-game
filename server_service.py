@@ -50,7 +50,7 @@ class Game:
         self.boards[1] = add_ships_to_board(self.boards[1], ship_objs)
 
 
-class GamesHandler:
+class ServerGamesHandler:
     def __init__(self):
         self.number_of_games = 0
         self.games_lst = []
@@ -106,11 +106,11 @@ def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SH
     :returns: the list of tuples
     """
     default_tiles = [[[ship_name_default, bool_shot_default] for _ in range(width)] for _ in range(height)]
+    #  TODO: delete if unnecessary
     # for x in range(height):
     #     for y in range(width):
     #         default_tiles[x][y] = (ship_name_default, bool_shot_default)
     # default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
-    print(default_tiles)
     return default_tiles
 
 

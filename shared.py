@@ -28,7 +28,7 @@ def receive_message(sock):
 
     """
     try:
-        recv_data = sock.recv(1024)
+        recv_data = sock.recv(5120)
         if recv_data:
             json_data = bytes(recv_data).decode()
             return json.loads(json_data)
