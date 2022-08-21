@@ -14,6 +14,17 @@ messages = [b"Message 1 from client.", b"Message 2 from client."]
 
 
 def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
+    """
+        this function is used to send check the pygame display event and make the necessary actions
+
+        game-> of typeClientGamesHandler, is used to keep up with important things involving the game like board, player
+        turn and etc...
+        sock -> the socket object used to send data to the server
+        elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+        mousex -> a variable that indicates the position of the x position on the board
+        mousey -> a variable that indicates the position of the y position on the board
+
+    """
     # Set the title in the menu bar to 'Battleship'
     mouse_clicked = False
     for event in pygame.event.get():
@@ -36,39 +47,13 @@ def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
     return mousex, mousey, mouse_clicked
 
 
-# def start_connections(host, port):
-#     server_addr = (host, port)
-#     #change order of while and try catch to get socket out?
-#     while True:
-#         try:
-#             print(f"Starting connection to {server_addr}")
-#             sock = set_socket(server_addr)
-#             #get board
-#             #my_board = receive_data(sock)
-#             my_board = generate_default_tiles(10,10)#for test
-#             #add ships to board
-#             #send_data(ships,sock)
-#             ship_objs = ['battleship', 'cruiser1', 'cruiser2', 'destroyer1', 'destroyer2',
-#                          'destroyer3', 'submarine1', 'submarine2', 'submarine3',
-#                          'submarine4']  # List of the ships available
-#             my_board = add_ships_to_board(my_board,ship_objs)  # call add_ships_to_board to add the list of ships to the main_board
-#             mousex, mousey = 0, 0  # location of mouse
-#             counter = []  # counter to track number of shots fired
-#             xmarkers, ymarkers = set_markers(my_board)  # The numerical markers on each side of the board
-#
-#
-#             send_data = json.dumps({"name": usr_input})
-#             sock.send(send_data.encode())
-#             recv_data = sock.recv(1024)  # Should be ready to read
-#
-#             print("data recived from server: " + str(json.loads(bytes(recv_data).decode())))
-#             sleep(1000)
-#         finally:
-#             print("socket closed")
-#             sock.close()
 
 
 def set_socket(server_addr):
+    """
+        this function is used to create the socket
+        server_addr -> is a tuple that contains the ip address and port of the server
+    """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
     sock.settimeout(200)
@@ -86,13 +71,18 @@ def set_socket(server_addr):
 
 # start_connections('127.0.0.1', 1233)
 def run_game(host, port, elem_dict):
+    """
+        this function has the game logic and execute the necessary processes
+        host-> the server ip address
+        port -> the server port address
+        elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+    """
     server_addr = (host, port)
     sock = set_socket(server_addr)
     run = True
     try:
         game = ClientGamesHandler()
         start_new_game(game, sock)
-        #operation_mapper(elem_dict, game, recv_data)
         mousex, mousey = 0, 0  # location of mouse
         counter = []  # counter to track number of shots fired
         xmarkers, ymarkers = set_markers(
@@ -131,15 +121,6 @@ def run_game(host, port, elem_dict):
         sock.close()
 
 
-# todo delete this comment when socket will work
-
-# my_board = generate_default_tiles(10, 10)  # for test
-# # add ships to board
-# # send_data(ships,sock)
-# ship_objs = ['battleship', 'cruiser1', 'cruiser2', 'destroyer1', 'destroyer2',
-#              'destroyer3', 'submarine1', 'submarine2', 'submarine3',
-#              'submarine4']  # List of the ships available
-# my_board = add_ships_to_board(my_board, ship_objs)  # call add_ships_to_board to add the list of ships to the main_board
 
 
 elem_dict = {"DISPLAYSURF": None, "FPSCLOCK": None, "BASICFONT": None, "HELP_SURF": None, "HELP_RECT": None,
