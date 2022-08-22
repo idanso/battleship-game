@@ -42,9 +42,4 @@ server to client:
 	"Action": game finished,
 	"Ainner": True
 }
-
-{
-	"Action": "scores",
-	"scores": [3,2]
-}
 	

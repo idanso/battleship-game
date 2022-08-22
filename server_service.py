@@ -14,30 +14,28 @@ BOARD_HEIGHT = 10  # Number of grids vertically
 ################
 
 
-# class Player:
-#
-#     def __init__(self, address):
-#         self.id = uuid.uuid4()
-#         # self.connection = connection  # TODO: check if needed
-#         self.address = address
-#         self.score = {"win": 0, "lose": 0}
-
-
 class GameStatus(enum.Enum):
     ACTIVE = 1
     ENDED = 2
     READY = 3
 
 
+class User:
+    def __init__(self, name):
+        self.name = name
+        self.score = {"win": 0, "lose": 0}
+
+
 class Game:
-    def __init__(self, address):
+    def __init__(self, address, player1, player2):
         self.id = uuid.uuid4()
+        self.players = [player1, player2]
         self.address = address
-        self.score = [0, 0]
+        # self.score = [0, 0]
         self.boards = [None, None]
         self.status = GameStatus.ACTIVE
 
-    def init_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
+    def init_auto_generated_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
         self.boards[0] = generate_default_tiles(height, width)
         self.boards[1] = generate_default_tiles(height, width)
 
@@ -49,26 +47,38 @@ class Game:
         self.boards[0] = add_ships_to_board(self.boards[0], ship_objs)
         self.boards[1] = add_ships_to_board(self.boards[1], ship_objs)
 
+    def set_players(self, players):
+        self.players = players
+
+    def set_boards(self, board1, board2):
+        self.boards[board1, board2]
+
 
 class ServerGamesHandler:
     def __init__(self):
         self.number_of_games = 0
         self.games_lst = []
+        self.users = []
+
+    def add_user(self, user):
+        self.users.append(user)
 
     def add_game(self, game: Game):
         self.games_lst.append(game)
         self.number_of_games += 1
 
-    def start_game(self, address):
+    def start_game(self, address, players, boards=None): # TODO: update Doc
         """
         create new game with initialized random boards for each player and add it to the games list
         :param: two players who will take park of the game
         :return: the game id
         """
-        game = self.get_game_by_address(address)
-        if not game:
-            game = Game(address)
-        game.init_boards()
+        game = Game(address)
+        game.set_players(players)
+        if boards:
+            game.set_boards(boards)
+        else:
+            game.init_auto_generated_boards()
 
         self.add_game(game)
         return game
@@ -93,6 +103,15 @@ class ServerGamesHandler:
         for game in self.games_lst:
             if game.status == GameStatus.ACTIVE and game.address[0] == game[0] and game.address[1] == game[1]:
                 return tuple(game.id)
+        return None
+
+    def get_ordered_5_players(self, reverse=True):
+        return sorted(self.users, key=lambda user: user.score["win"], reverse=reverse)[:5]
+
+    def get_user_by_name(self, name):
+        for user in self.users:
+            if user.name == name:
+                return user
         return None
 
 

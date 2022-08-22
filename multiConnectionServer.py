@@ -37,15 +37,21 @@ def service_connection(key, mask):
 # TODO: consider replacing actions string to enums
 def operation_mapper(sock, address, received_data):
     if received_data["Action"] == "start_game":
-        game = game_handler.start_game(address)
-        if received_data["Quit"] == 0:
-            game.score[1] += 1
-        elif received_data["Quit"] == 1:
-            game.score[0] += 1
-        print("result of game from address: %s, is: %s", str(game.address), str(game.score))
+        if received_data["Quit"] == 0 or received_data["Quit"] == 1:
+            game = game_handler.get_game_by_address(address)
+            game.status = server_service.GameStatus.ENDED
+            if received_data["Quit"] == 0:
+                game.players[1]["win"] += 1
+                game.players[0]["lose"] += 1
+            elif received_data["Quit"] == 1:
+                game.players[0]["win"] += 1
+                game.players[1]["lose"] += 1
+
+        game_handler.start_game(address,
+                                received_data["Player_name"],
+                                [received_data["Board_1"], received_data["Board_2"]])
+
         data_dict = dict({"Action": "start_game"})
-        data_dict["Board_1"] = game.boards[0]
-        data_dict["Board_2"] = game.boards[0]
         send_message(sock, data_dict)
     else:
         game = game_handler.get_game_by_address(address)
@@ -63,14 +69,16 @@ def operation_mapper(sock, address, received_data):
             win_res = server_service.check_for_win(board)
             if win_res:
                 if received_data["Hitted_player"] == 1:
-                    game.score[0] += 1
+                    game.players[0]["win"] += 1
+                    game.players[1]["lose"] += 1
                     game.status = server_service.GameStatus.ENDED
             data_dict = dict({"Action": "hit", "Success": hit_res, "Finished": win_res})
             send_message(sock, data_dict)
-        elif received_data["Action"] == "scores":
-            scores = game.score
-            data_dict = dict({"Action": "hit", "Scores": scores})
-            send_message(sock, data_dict)
+        # TODO: check if needed cause the score displayed in server side
+        # elif received_data["Action"] == "scores":
+        #     scores = game.score
+        #     data_dict = dict({"Action": "hit", "Scores": scores})
+        #     send_message(sock, data_dict)
 
         elif received_data["Action"] == "close_connection":
             print(f"Closing connection to {address}")
