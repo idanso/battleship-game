@@ -12,7 +12,7 @@ def main():
     pg.font.init()
     pg.mixer.init()
 
-    pg.mixer.music.load("..\\soundfile\\start.mp3")
+    pg.mixer.music.load("../../soundfile/start.mp3")
     pg.mixer.music.play()
 
     font = pg.font.SysFont("Ariel", 24, bold=True)
