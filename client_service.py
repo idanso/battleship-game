@@ -411,6 +411,7 @@ class ClientGamesHandler:
     def __init__(self):
         # Todo add name?
         self.players_board = [None, None]
+        self.players_name = [None, None]
         self.turn_of_player = random.randint(0, 1)
         self.last_attack = None
 
@@ -422,6 +423,15 @@ class ClientGamesHandler:
         """
         self.players_board[0] = board_1
         self.players_board[1] = board_2
+
+    def set_boards(self, player_1_name, player_2_name):
+        """
+            a function that set the two players board
+            board_1 -> board of player 1
+            board_2 -> board of player 2
+        """
+        self.players_name[0] = player_1_name
+        self.players_name[1] = player_2_name
 
     def hit_on_board(self, x, y):
         """
@@ -488,7 +498,8 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
             print("Game ended")
             start_new_game(game, sock)
             # TODO: show result screen
-
+    elif received_data["Action"] == "ok":
+        pass
 
     elif received_data["Action"] == "game finished":
         pygame.quit()
@@ -508,11 +519,12 @@ def start_new_game(game, sock, quit = False):
     sock -> the socket object used to send data to the server
     quit -> to tell the server which player pressed the new game button (Quit = None mean we just started the first game)
     """
+    data = {"Action": "start_game", "Player_name": game.players_name, "Board_1": game.players_board[0], "Board_2": game.players_board[1]}
     if quit:
-        data = {"Action": "start_game", "Quit": game.turn_of_player}
+        data["Quit"] = game.turn_of_player
     else:
-        data = {"Action": "start_game", "Quit": None}
+        data["Quit"] = None
     send_message(sock, data)
     # get board
     recv_data = receive_message(sock)
-    game.set_boards(recv_data["Board_1"], recv_data["Board_2"])
+    operation_mapper(recv_data)
