@@ -2,10 +2,13 @@ import random
 
 import uuid
 import enum
+import pickle
 
 #### Globals ####
 DEFAULT_SHIP_NAME = None
 DEFAULT_BOOL_SHOT = False
+
+FILE_NAME = "saved_data"
 
 BOARD_WIDTH = 10  # Number of grids horizontally
 BOARD_HEIGHT = 10  # Number of grids vertically
@@ -113,6 +116,22 @@ class ServerGamesHandler:
             if user.name == name:
                 return user
         return None
+
+    def finish_all_games(self):
+        for game in self.games_lst:
+            if game.status == GameStatus.ACTIVE:
+                game.status = GameStatus.ENDED
+
+
+def save_data_to_file(game_handler, file_name=FILE_NAME):
+    with open(file_name, 'wb') as f:
+        pickle.dump(game_handler, f)
+
+
+def load_data_from_file(file_name=FILE_NAME):
+    with open(file_name, 'rb') as f:
+        game_handler = pickle.load(f)
+    return game_handler
 
 
 def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SHIP_NAME,

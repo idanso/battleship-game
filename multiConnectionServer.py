@@ -3,6 +3,7 @@ import selectors
 import types
 import server_service
 from shared import *
+from os.path import exists
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
@@ -93,7 +94,10 @@ def operation_mapper(sock, address, received_data):
 
 sel = selectors.DefaultSelector()
 
-game_handler = server_service.ServerGamesHandler()
+if exists(server_service.FILE_NAME):
+    game_handler = server_service.load_data_from_file()
+else:
+    game_handler = server_service.ServerGamesHandler()
 
 host, port = HOST, PORT  # sys.argv[1], int(sys.argv[2])
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -116,4 +120,5 @@ except KeyboardInterrupt:
     print("Caught keyboard interrupt, exiting")
 finally:
     sel.close()
-
+    game_handler.finish_all_games()
+    server_service.save_data_to_file(game_handler)
