@@ -4,16 +4,18 @@ import types
 import server_service
 from shared import *
 from os.path import exists
+import logging
+from datetime import datetime
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
 
-
 #################
+
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
-    print(f"Accepted connection from {addr}")
+    logging.info(f"Accepted connection from {addr}")
     conn.setblocking(False)
     sock.settimeout(200)
     data = types.SimpleNamespace(addr=addr)
@@ -27,7 +29,7 @@ def service_connection(key, mask):
 
     if mask & selectors.EVENT_READ:
         try:
-            print("service_connection data address: " + str(data.addr))
+            logging.info("received message data from address: " + str(data.addr))
             recv_data = receive_message(sock)  # Should be ready to read
             if recv_data:
                 operation_mapper(sock, data.addr, recv_data)
@@ -57,7 +59,7 @@ def operation_mapper(sock, address, received_data):
     else:
         game = game_handler.get_game_by_address(address)
         if not game:
-            print("couldn't find game from address: %s", received_data["Address"])
+            logging.ERROR("couldn't find game from address: %s", received_data["Address"])
             # TODO: consider throwing error
             return
         if received_data["Action"] == "attack":
@@ -75,22 +77,24 @@ def operation_mapper(sock, address, received_data):
                     game.status = server_service.GameStatus.ENDED
             data_dict = dict({"Action": "hit", "Success": hit_res, "Finished": win_res})
             send_message(sock, data_dict)
-        # TODO: check if needed cause the score displayed in server side
-        # elif received_data["Action"] == "scores":
-        #     scores = game.score
-        #     data_dict = dict({"Action": "hit", "Scores": scores})
-        #     send_message(sock, data_dict)
 
         elif received_data["Action"] == "close_connection":
-            print(f"Closing connection to {address}")
+            logging.info(f"Closing connection to {address}")
             game = game_handler.get_game_by_address(address)
             game.status = server_service.GameStatus.ENDED
             sel.unregister(sock)
             sock.close()
         else:
-            print("unknown Action: %s", received_data["Action"])
+            logging.ERROR("unknown Action: %s", received_data["Action"])
             # TODO: consider throwing error
 
+
+# set logger
+format_data = "%d_%m_%y_%H_%M"
+date_time = datetime.now().strftime(format_data)
+logging.basicConfig(filename='Log/log_' + date_time + '.log', filemode='w',
+                    level=logging.DEBUG,
+                    format='%(asctime)s : %(message)s')
 
 sel = selectors.DefaultSelector()
 
@@ -103,7 +107,7 @@ host, port = HOST, PORT  # sys.argv[1], int(sys.argv[2])
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 lsock.bind((host, port))
 lsock.listen()
-print(f"Listening on {(host, port)}")
+logging.info(f"Listening on {(host, port)}")
 lsock.setblocking(False)
 sel.register(lsock, selectors.EVENT_READ, data=None)
 
