@@ -38,6 +38,8 @@ class Board(pg.Surface):
         self._left = 0
         self._top = 0
 
+
+
     def draw(self):
         # TODO draw border around entire board to be even with the inner grid
 

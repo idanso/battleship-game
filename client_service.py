@@ -1,8 +1,8 @@
 import random, sys, pygame
+
 from shared import *
-from cffi.backend_ctypes import xrange
 from pygame.locals import *
-from server_service import check_revealed_tile  # TODO: delete after testing
+import board
 
 # Set variables, like screen width and height
 # globals
@@ -471,6 +471,43 @@ class ClientGamesHandler:
             self.turn_of_player = 1
         else:
             self.turn_of_player = 0
+
+
+    def encode(self):
+        player_board = board.Board()
+        opponent_board = board.Board()
+
+        for i, row in enumerate(self.players_board[self.turn_of_player]):
+            for c, tile in enumerate(row):
+                if tile[0]:  # if ship exist
+                    player_board.ships[i][c] = True
+                    if tile[1]:  # if hitted
+                        player_board.state[i][c] = board.SHIP_CONFLICT
+                    else:
+                        player_board.state[i][c] = board.COVERED
+                else:
+                    player_board.ships[i][c] = False
+                    if tile[1]:  # if hitted
+                        player_board.state[i][c] = board.MISS
+                    else:
+                        player_board.state[i][c] = board.COVERED
+
+        for i, row in enumerate(self.get_board_of_opponent()):
+            for c, tile in enumerate(row):
+                if tile[0]:  # if ship exist
+                    player_board.ships[i][c] = True
+                    if tile[1]:  # if hitted
+                        player_board.state[i][c] = board.SHIP_CONFLICT
+                    else:
+                        player_board.state[i][c] = board.COVERED
+                else:
+                    player_board.ships[i][c] = False
+                    if tile[1]:  # if hitted
+                        player_board.state[i][c] = board.MISS
+                    else:
+                        player_board.state[i][c] = board.COVERED
+
+
 
 
 def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = None):
