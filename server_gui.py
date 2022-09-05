@@ -1,6 +1,6 @@
+import sys
 import tkinter as tk
-# from multiConnectionServer import game_handler
-# from server_service import start_client
+from server_service import start_client
 
 
 class ServerScreen(tk.Frame):
@@ -77,7 +77,7 @@ class ServerScreen(tk.Frame):
             self.plyr_1_ent.delete(0, 'end')
             self.plyr_2_ent.delete(0, 'end')
             # TODO actually start a game
-            # start_client(game_handler, (self.plyr_1_name, self.plyr_2_name))
+            start_client((self.plyr_1_name, self.plyr_2_name))
             self.plyr_1_name = None
             self.plyr_2_name = None
 
@@ -98,9 +98,7 @@ class ServerScreen(tk.Frame):
 
 
 
-
-
-def show_screen(game_heandler):
+def show_screen():
     root = tk.Tk()
     ServerScreen(root).pack(expand=True, fill='both')
     root.mainloop()

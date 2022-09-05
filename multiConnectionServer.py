@@ -1,7 +1,11 @@
 import socket
 import selectors
+import multiprocessing
+import threading
 import traceback
 import types
+
+import server_gui
 import server_service
 from shared import *
 from os.path import exists
@@ -64,10 +68,10 @@ def operation_mapper(sock, address, received_data):
         # send_message(sock, data_dict)
 
     if received_data["Action"] == "start_server":
-        game_handler.readyPlayers = ['idan', 'shiran'] # TODO: only for testing need to delete
-        for player in game_handler.readyPlayers: # TODO: only for testing need to delete
-            if player not in game_handler.users:
-                game_handler.add_user(server_service.User(player))
+        # game_handler.readyPlayers = ['idan', 'shiran'] # TODO: only for testing need to delete
+        # for player in game_handler.readyPlayers: # TODO: only for testing need to delete
+        #     if player not in game_handler.users:
+        #         game_handler.add_user(server_service.User(player))
         data_dict = dict({"Action": "start_game", "Players": game_handler.readyPlayers, "Restart": False})
         send_message(sock, data_dict, logging)
     else:
@@ -102,6 +106,27 @@ def operation_mapper(sock, address, received_data):
             logging.error("unknown Action: %s", received_data["Action"])
             # TODO: consider throwing error
 
+def server_thread():
+    host, port = HOST, PORT  # sys.argv[1], int(sys.argv[2])
+    lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lsock.bind((host, port))
+    lsock.listen()
+    logging.info(f"Listening on {(host, port)}")
+    lsock.setblocking(False)
+    sel.register(lsock, selectors.EVENT_READ, data=None)
+    try:
+        while True:
+            events = sel.select(timeout=None)
+            for key, mask in events:
+                if key.data is None:
+                    accept_wrapper(key.fileobj)
+                else:
+                    service_connection(key, mask)
+    except KeyboardInterrupt:
+        print("Caught keyboard interrupt, exiting")
+    finally:
+        sel.close()
+        logging.info("socket closed")
 
 # set logger
 format_data = "%d_%m_%y_%H_%M"
@@ -117,28 +142,20 @@ if exists(server_service.FILE_NAME):
 else:
     game_handler = server_service.ServerGamesHandler()
 
-host, port = HOST, PORT  # sys.argv[1], int(sys.argv[2])
-lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-lsock.bind((host, port))
-lsock.listen()
-logging.info(f"Listening on {(host, port)}")
-lsock.setblocking(False)
-sel.register(lsock, selectors.EVENT_READ, data=None)
 
-test_start_client = 0 # TODO: for testing to delete
-try:
-    while True:
-#        server_service.start_client(game_handler)
-        events = sel.select(timeout=None)
-        for key, mask in events:
-            if key.data is None:
-                accept_wrapper(key.fileobj)
-            else:
-                service_connection(key, mask)
-except KeyboardInterrupt:
-    print("Caught keyboard interrupt, exiting")
-finally:
-    sel.close()
-    logging.info("socket closed")
-    game_handler.finish_all_games()
-    server_service.save_data_to_file(game_handler)
+
+
+
+server_service.set_game_handler(game_handler)
+
+# server_main_thread = threading.Thread(target=server_thread)
+# # server_main_thread.setDaemon(True)
+server_gui_thread = threading.Thread(target=server_gui.show_screen)
+# server_main_thread.start()
+server_gui_thread.start()
+
+while server_gui_thread.is_alive():
+    pass
+
+game_handler.finish_all_games()
+server_service.save_data_to_file(game_handler)

@@ -8,6 +8,8 @@ import pickle
 #### Globals ####
 from shared import send_message
 
+game_handler = None
+
 DEFAULT_SHIP_NAME = None
 DEFAULT_BOOL_SHOT = False
 
@@ -301,7 +303,7 @@ def has_adjacent(board, x_pos, y_pos, ship):
                 return True
     return False
 
-def start_client(game_handler:ServerGamesHandler, players=('idan', 'shiran')):
+def start_client(players=('idan', 'shiran')):
     exec(open("client.py").read())
     # TODO: consider adding sleep
     for player in players:
@@ -309,4 +311,7 @@ def start_client(game_handler:ServerGamesHandler, players=('idan', 'shiran')):
             game_handler.add_user(User(player))
 
     game_handler.readyPlayers = players
+
+def set_game_handler(game_handler):
+    game_handler = game_handler
 

@@ -1,10 +1,7 @@
 from datetime import datetime
-import json
-import sys
 import socket
 import selectors
 import types
-from time import sleep
 import pygame
 import client_service as cs
 from pygame.locals import *
@@ -57,7 +54,7 @@ def set_socket(server_addr):
 
         :return: socket
     """
-    messages = [b"Message 1 from client.", b"Message 2 from client."]
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
     sock.settimeout(200)
@@ -71,6 +68,7 @@ def set_socket(server_addr):
     )
     sel.register(sock, events, data=data)
     return sock
+
 
 def init_names_first_game(sock, game):
     """
@@ -87,7 +85,6 @@ def init_names_first_game(sock, game):
     game.init_auto_generated_boards()
     data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], "Quit": None}
     send_message(sock, data, logging)
-
 
 
 # start_connections('127.0.0.1', 1233)
