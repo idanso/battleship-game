@@ -489,11 +489,11 @@ class ClientGamesHandler:
         self.players_board[0] = board_1
         self.players_board[1] = board_2
 
-    def set_boards(self, player_1_name, player_2_name):
+    def set_names(self, player_1_name, player_2_name):
         """
             a function that set the two players board
-            :param player_1_name: List; board of player 1
-            :param player_2_name: List; board of player 2
+            :param player_1_name: String; name of player 1
+            :param player_2_name: String; name of player 2
         """
         self.players_name[0] = player_1_name
         self.players_name[1] = player_2_name
@@ -616,7 +616,13 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
 
         if received_data["Finished"]:
             print("Game ended")
-            start_new_game(game, sock)
+            new_game_preeseed = False
+            while(not new_game_preeseed):
+                for event in pygame.event.get():
+                    if event.type == MOUSEBUTTONUP:
+                        if elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
+                            start_new_game(game, sock)
+                            new_game_preeseed = True
             # TODO: show result screen
     elif received_data["Action"] == "ok":
         pass
