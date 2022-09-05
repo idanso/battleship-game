@@ -50,8 +50,9 @@ HIGHLIGHTCOLOR = BLUE
 def init_elements(counter: int, elem_dict):
     """
             do initialization to parameters involving pygame window that need to happen in every loop of the game
-            elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+            :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
 
+            :return: elem_dict:Dict
     """
 
     # counter display (it needs to be here in order to refresh it)
@@ -73,7 +74,9 @@ def init_elements(counter: int, elem_dict):
 def set_window(elem_dict):
     """
         do initialization to parameters involving pygame window that happens only once at start
-        elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+        :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+
+        :return: elem_dict:Dict
 
     """
     window_H = WINDOWHEIGHT
@@ -113,9 +116,9 @@ def blowup_animation(coord, elem_dict):
     """
     Function creates the explosition played if a ship is shot.
 
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
 
-    coord -> tuple of tile coords to apply the blowup animation
+    :param coord: tuple of tile coords to apply the blowup animation
     """
     for image in elem_dict[
         "EXPLOSION_IMAGES"]:  # go through the list of images in the list of pictures and play them in sequence
@@ -130,10 +133,10 @@ def draw_tile_covers(tile, coverage, elem_dict, hit= False):
     """
     Function draws the tiles according to a set of variables.
 
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
-    tile -> tuple; of tile coords to reveal
-    coverage -> int; amount of the tile that is covered
-    hit -> did the tile contained a ship that was hit
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+    :param tile: tuple; of tile coords to reveal
+    :param coverage: int; amount of the tile that is covered
+    :param hit: did the tile contained a ship that was hit
     """
     left, top = left_top_coords_tile(tile[0], tile[1])
     if hit:
@@ -155,9 +158,9 @@ def reveal_tile_animation(tile_to_reveal, elem_dict, hit = False):
     Function creates an animation which plays when the mouse is clicked on a tile, and whatever is
     behind the tile needs to be revealed.
 
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
-    tile_to_reveal -> tuple of tile coords to apply the reveal animation to
-    hit -> did the tile contained a ship that was hit
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+    :param tile_to_reveal: tuple of tile coords to apply the reveal animation to
+    :param hit: Boolean that indicate if the tile contained a ship that was hit
 
     """
     for coverage in range(TILESIZE, (-REVEALSPEED) - 1, -REVEALSPEED):  # Plays animation based on reveal speed
@@ -168,9 +171,9 @@ def draw_board(board, elem_dict, my_board: bool):
     """
     Function draws the game board.
 
-    board -> list of board tiles
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
-    my_board -> bool that indicates if we need to cover the ships that still wasn't revealed
+    :param board: list of board tiles
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+    :param my_board: Bool that indicates if we need to cover the ships that still wasn't revealed
     """
     # draws the grids depending on its state
     for tilex in range(BOARDWIDTH):
@@ -202,6 +205,8 @@ def draw_board(board, elem_dict, my_board: bool):
 def check_for_quit():
     """
     Function checks if the user has attempted to quit the game.
+
+    :return: Boolean
     """
     for event in pygame.event.get(QUIT):
         pygame.quit()
@@ -215,8 +220,9 @@ def set_markers(board):
     Function creates the lists of the markers to the side of the game board which indicates
     the number of ship pieces in each row and column.
 
-    board: list of board tiles
-    returns the 2 lists of markers with number of ship pieces in each row (xmarkers)
+    :param board: list of board tiles
+
+    :return: 2 lists of markers with number of ship pieces in each row (xmarkers)
         and column (ymarkers)
     """
     xmarkers = [0 for i in range(BOARDWIDTH)]
@@ -235,9 +241,9 @@ def draw_markers(xlist, ylist, elem_dict):
     """
     Function draws the two list of markers to the side of the board.
 
-    xlist -> list of row markers
-    ylist -> list of column markers
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+    :param xlist: list of row markers
+    :param ylist: list of column markers
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
 
     """
 
@@ -261,9 +267,10 @@ def left_top_coords_tile(tilex, tiley):
     """
     Function calculates and returns the pixel of the tile in the top left corner
 
-    tilex -> int; x position of tile
-    tiley -> int; y position of tile
-    returns tuple (int, int) which indicates top-left pixel coordinates of tile
+    :param tilex: int; x position of tile
+    :param tiley: int; y position of tile
+
+    :return: tuple (int, int) which indicates top-left pixel coordinates of tile
     """
     left = tilex * TILESIZE + XMARGIN + MARKERSIZE
     top = tiley * TILESIZE + YMARGIN + MARKERSIZE
@@ -274,9 +281,10 @@ def get_tile_at_pixel(x, y):
     """
     Function finds the corresponding tile coordinates of pixel at top left, defaults to (None, None) given a coordinate.
 
-    x -> int; x position of pixel
-    y -> int; y position of pixel
-    returns tuple (tilex, tiley)
+    :param x: int; x position of pixel
+    :param y: int; y position of pixel
+
+    :return: tuple (tilex, tiley)
     """
     for tilex in range(BOARDWIDTH):
         for tiley in range(BOARDHEIGHT):
@@ -291,9 +299,9 @@ def draw_highlight_tile(tilex, tiley, elem_dict):
     """
     Function draws the hovering highlight over the tile.
 
-    tilex -> int; x position of tile
-    tiley -> int; y position of tile
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+    :param tilex: int; x position of tile
+    :param tiley: int; y position of tile
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
     """
     left, top = left_top_coords_tile(tilex, tiley)
     pygame.draw.rect(elem_dict["DISPLAYSURF"], HIGHLIGHTCOLOR,
@@ -303,7 +311,7 @@ def draw_highlight_tile(tilex, tiley, elem_dict):
 def show_help_screen(elem_dict):
     """
     Function display a help screen until any button is pressed.
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
     """
     line1_surf, line1_rect = make_text_objs('Press a key to return to the game',
                                             elem_dict["BASICFONT"], TEXTCOLOR)
@@ -342,7 +350,7 @@ def check_for_keypress():
     """
     Function checks for any key presses by pulling out all KEYDOWN and KEYUP events from queue.
 
-    returns any KEYUP events, otherwise return None
+    :return: any KEYUP events, otherwise return None
     """
     for event in pygame.event.get([KEYDOWN, KEYUP, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION]):
         if event.type in (KEYDOWN, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEMOTION):
@@ -355,10 +363,11 @@ def make_text_objs(text, font, color):
     """
     Function creates a text.
 
-    text -> string; content of text
-    font -> Font object; face of font
-    color -> tuple of color (red, green blue); colour of text
-    returns the surface object, rectangle object
+    :param text: string; content of text
+    :param font: Font object; face of font
+    :param color: tuple of color (red, green blue); colour of text
+
+    :return: the surface object, rectangle object
     """
     surf = font.render(text, True, color)
     return surf, surf.get_rect()
@@ -368,8 +377,8 @@ def show_gameover_screen(shots_fired, elem_dict):
     """
     Function display a gameover screen when the user has successfully shot at every ship pieces.
 
-    shots_fired -> the number of shots taken before game is over
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+    :param shots_fired: the number of shots taken before game is over
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
     """
     elem_dict["DISPLAYSURF"].fill(BGCOLOR)
     titleSurf, titleRect = make_text_objs('Congrats! Puzzle solved in:',
@@ -403,12 +412,7 @@ def show_gameover_screen(shots_fired, elem_dict):
 
 
 class ClientGamesHandler:
-    """
-        A class that helps us keep track with all the actions and variables that involves in a game
-        players_board -> variable that contains the players board
-        turn_of_player -> variable that contains which player turn is currently running
-        last_attack -> variable that contains in which tile was the last attack
-    """
+
     def __init__(self):
         # Todo add name?
         self.players_board = [None, None]
@@ -419,8 +423,8 @@ class ClientGamesHandler:
     def set_boards(self, board_1, board_2):
         """
             a function that set the two players board
-            board_1 -> board of player 1
-            board_2 -> board of player 2
+            :param board_1: List; board of player 1
+            :param board_2: List; board of player 2
         """
         self.players_board[0] = board_1
         self.players_board[1] = board_2
@@ -428,8 +432,8 @@ class ClientGamesHandler:
     def set_boards(self, player_1_name, player_2_name):
         """
             a function that set the two players board
-            board_1 -> board of player 1
-            board_2 -> board of player 2
+            :param player_1_name: List; board of player 1
+            :param player_2_name: List; board of player 2
         """
         self.players_name[0] = player_1_name
         self.players_name[1] = player_2_name
@@ -438,6 +442,9 @@ class ClientGamesHandler:
         """
         a function that keep track of the last attack on the(x,y) position and make the necessary changes to the
         board and change the player turn
+
+        :param x: int; x position of tile
+        :param y: int; y position of tile
         """
         self.last_attack = [x, y]
         self.get_board_of_opponent()[x][y][1] = True
@@ -445,7 +452,7 @@ class ClientGamesHandler:
 
     def opponent_number(self):
         """
-            returns the number of the opponent
+            :return: int; the number of the opponent
         """
         if self.turn_of_player == 0:
             return 1
@@ -454,13 +461,15 @@ class ClientGamesHandler:
 
     def get_board_of_opponent(self):
         """
-            return the board of the opponent
+            :return: List; the board of the opponent
         """
         return self.players_board[self.turn_of_player - 1]
 
     def get_if_opponent_reveled_tile(self, tile):
         """
             a function that check if the tile was already revealed on the opponent board
+
+            :return: Boolean; if the tile was hit
         """
         return self.get_board_of_opponent()[tile[0]][tile[1]][1]
 
@@ -475,6 +484,7 @@ class ClientGamesHandler:
 
 
     def encode(self):
+        #TODO: add doc
         player_board = board.Board()
         opponent_board = board.Board()
 
@@ -515,11 +525,11 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
     """
     this function is used to map the different actions that were received from the server with there corresponding actions
 
-    elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
-    game-> of type ClientGamesHandler, is used to keep up with important things involving the game like board, player turn and
+    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+    :param game: of type ClientGamesHandler, is used to keep up with important things involving the game like board, player turn and
     etc...
-    received_data-> the dict that was received from the server
-    sock -> the socket object used to send data to the server
+    :param received_data: Dict that was received from the server
+    :param sock: Socket object used to send data to the server
     """
     if received_data["Action"] == "start_game":
         game.add_boards(received_data["Board_1"], received_data["Board_2"])
@@ -552,10 +562,10 @@ def start_new_game(game, sock, quit = False):
     this function is used to send to the server that the client is starting a new game and receive from the server
     the new boards
 
-    game-> of typeClientGamesHandler, is used to keep up with important things involving the game like board, player
+    :param game: type ClientGamesHandler, is used to keep up with important things involving the game like board, player
     turn and etc...
-    sock -> the socket object used to send data to the server
-    quit -> to tell the server which player pressed the new game button (Quit = None mean we just started the first game)
+    :param sock: Socket object used to send data to the server
+    :param quit: boolean to tell the server which player pressed the new game button (Quit = None mean we just started the first game)
     """
     data = {"Action": "start_game", "Player_name": game.players_name, "Board_1": game.players_board[0], "Board_2": game.players_board[1]}
     if quit:

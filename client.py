@@ -17,12 +17,14 @@ def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
     """
         this function is used to send check the pygame display event and make the necessary actions
 
-        game-> of typeClientGamesHandler, is used to keep up with important things involving the game like board, player
+        :param game: of type ClientGamesHandler, is used to keep up with important things involving the game like board, player
         turn and etc...
-        sock -> the socket object used to send data to the server
-        elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
-        mousex -> a variable that indicates the position of the x position on the board
-        mousey -> a variable that indicates the position of the y position on the board
+        :param sock: the socket object used to send data to the server
+        :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+        :param mousex: Int that indicates the position of the x position on the board
+        :param mousey: Int that indicates the position of the y position on the board
+
+        :return: mousex:Int, mousey:Int, mouse_clicked:Boolean
 
     """
     # Set the title in the menu bar to 'Battleship'
@@ -52,7 +54,9 @@ def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
 def set_socket(server_addr):
     """
         this function is used to create the socket
-        server_addr -> is a tuple that contains the ip address and port of the server
+        :param server_addr: Tuple that contains the ip address and port of the server
+
+        :return: socket
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
@@ -73,9 +77,9 @@ def set_socket(server_addr):
 def run_game(host, port, elem_dict):
     """
         this function has the game logic and execute the necessary processes
-        host-> the server ip address
-        port -> the server port address
-        elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
+        :param host: String that contains the server ip address
+        :param port: String that contains the server port address
+        :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
     """
     server_addr = (host, port)
     sock = set_socket(server_addr)
