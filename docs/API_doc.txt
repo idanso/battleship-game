@@ -1,18 +1,25 @@
 client to server:
 
 {
-	"Action": attack,
+	"Action": "attack",
 	"Hitted_player": 1,
 	"Location": [x,y]
 }
 
 {
-	"Action": "start game",
+	"Action": "start_game",
+	"Board_1": [x,y],
+	"Board_2": [x,y],
 	"Quit": 2 // 0- first player quit, 1- second player quit, else- no one quit
 }
 
 {
 	"Action": "scores"
+}
+
+{
+	"Action": "start_server"
+
 }
 
 
@@ -21,20 +28,20 @@ client to server:
 server to client:
 
 {
-	"Action": hit,
+	"Action": "hit",
 	"Success": true,
 	"Finished": false
 }
 
 {
-	"Action": start game,
-	"players": ['idan', 'shiran']
-	"Board_1": [x,y],
-	"Board_2": [x,y],
+	"Action": "start_game",
+	"players": ['idan', 'shiran'],
+	"restart": True
+
 }
 
 {
-	"Action": game finished,
+	"Action": "game_finished",
 	"Ainner": True
 }
 

@@ -6,6 +6,8 @@ import pickle
 import client
 
 #### Globals ####
+from shared import send_message
+
 DEFAULT_SHIP_NAME = None
 DEFAULT_BOOL_SHOT = False
 
@@ -28,6 +30,9 @@ class User:
     def __init__(self, name):
         self.name = name
         self.score = {"win": 0, "lose": 0}
+
+    def __cmp__(self, other):
+        return self.name == other.name
 
 
 class Game:
@@ -63,6 +68,7 @@ class ServerGamesHandler:
         self.number_of_games = 0
         self.games_lst = []
         self.users = []
+        self.readyPlayers = [None, None]
 
     def add_user(self, user):
         self.users.append(user)
@@ -71,18 +77,21 @@ class ServerGamesHandler:
         self.games_lst.append(game)
         self.number_of_games += 1
 
-    def start_game(self, address, players, boards=None): # TODO: update Doc
+    def start_game(self, address, players=None, boards=None): # TODO: update Doc
         """
         create new game with initialized random boards for each player and add it to the games list
         :param: two players who will take park of the game
         :return: the game id
         """
         game = Game(address)
-        game.set_players(players)
+
+
+
+        game.set_players([self.get_user_by_name(players[0]), self.get_user_by_name(players[0])])
         if boards:
             game.set_boards(boards)
-        else:
-            game.init_auto_generated_boards()
+        # else:
+        #     game.init_auto_generated_boards()
 
         self.add_game(game)
         return game
@@ -288,6 +297,12 @@ def has_adjacent(board, x_pos, y_pos, ship):
                 return True
     return False
 
-def start_client(players=('idan', 'shiran')):
+def start_client(gameHandler:ServerGamesHandler, players=('idan', 'shiran')):
     client.run_client('127.0.0.1', 1233)
+    # TODO: consider adding sleep
+    for player in players:
+        if player not in gameHandler.users:
+            gameHandler.add_user(User(player))
+
+    gameHandler.readyPlayers = players
 

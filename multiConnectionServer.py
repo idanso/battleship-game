@@ -40,9 +40,11 @@ def service_connection(key, mask):
 # TODO: consider replacing actions string to enums
 def operation_mapper(sock, address, received_data):
     if received_data["Action"] == "start_game":
-        if received_data["Quit"] == 0 or received_data["Quit"] == 1:
+        restart = False
+        if received_data["Quit"] in (0,1):
             game = game_handler.get_game_by_address(address)
             game.status = server_service.GameStatus.ENDED
+            restart = True
             if received_data["Quit"] == 0:
                 game.players[1]["win"] += 1
                 game.players[0]["lose"] += 1
@@ -50,11 +52,14 @@ def operation_mapper(sock, address, received_data):
                 game.players[0]["win"] += 1
                 game.players[1]["lose"] += 1
 
-        game_handler.start_game(address,
-                                received_data["Player_name"],
-                                [received_data["Board_1"], received_data["Board_2"]])
 
-        data_dict = dict({"Action": "start_game"})
+        game_handler.start_game(address,game_handler.readyPlayers, [received_data["Board_1"], received_data["Board_2"]])
+
+        data_dict = dict({"Action": "start_game", "Players": game.players, "Restart": restart})
+        send_message(sock, data_dict)
+
+    if received_data["Action"] == "start_server":
+        data_dict = dict({"Action": "start_game", "Players": game_handler.readyPlayers, "Restart": False})
         send_message(sock, data_dict)
     else:
         game = game_handler.get_game_by_address(address)
