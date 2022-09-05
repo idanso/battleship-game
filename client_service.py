@@ -240,6 +240,7 @@ def draw_markers(xlist, ylist, elem_dict):
     elem_dict -> A dict that contains all the necessary element for the pygame display to make changes
 
     """
+
     for i in range(len(xlist)):  # Draw the x-marker list
         left = i * MARKERSIZE + XMARGIN + MARKERSIZE + (TILESIZE / 3)
         top = YMARGIN
