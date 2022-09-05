@@ -9,6 +9,9 @@ import client_service as cs
 from pygame.locals import *
 from shared import *
 
+sel = selectors.DefaultSelector()
+messages = [b"Message 1 from client.", b"Message 2 from client."]
+
 
 def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
     """
@@ -55,7 +58,6 @@ def set_socket(server_addr, sel):
 
         :return: socket
     """
-    messages = [b"Message 1 from client.", b"Message 2 from client."]
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
     sock.settimeout(200)
@@ -79,11 +81,11 @@ def init_names_first_game(sock, game):
         :param sock: the socket object used to send data to the server
     """
 
-    send_message(sock, {"Action": "Start_server"})
+    send_message(sock, {"Action": "start_server"})
     received_data = receive_message(sock)
     game.set_names(received_data["Players"][0], received_data["Players"][1])
     game.init_auto_generated_boards()
-    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], ["Quit"]: None}
+    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], "Quit": None}
     send_message(sock, data)
 
 
@@ -96,7 +98,6 @@ def run_game(host, port, elem_dict):
         :param port: String that contains the server port address
         :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
     """
-    sel = selectors.DefaultSelector()
     server_addr = (host, port)
     sock = set_socket(server_addr, sel)
     run = True
