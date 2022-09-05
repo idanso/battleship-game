@@ -3,6 +3,7 @@ import random
 import uuid
 import enum
 import pickle
+import client
 
 #### Globals ####
 DEFAULT_SHIP_NAME = None
@@ -286,3 +287,7 @@ def has_adjacent(board, x_pos, y_pos, ship):
                     (board[x][y][0] not in (ship, None)):
                 return True
     return False
+
+def start_client(players=('idan', 'shiran')):
+    client.run_client('127.0.0.1', 1233)
+

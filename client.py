@@ -9,9 +9,6 @@ from client_service import *
 from pygame.locals import *
 from shared import *
 
-sel = selectors.DefaultSelector()
-messages = [b"Message 1 from client.", b"Message 2 from client."]
-
 
 def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
     """
@@ -51,13 +48,14 @@ def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
 
 
 
-def set_socket(server_addr):
+def set_socket(server_addr, sel):
     """
         this function is used to create the socket
         :param server_addr: Tuple that contains the ip address and port of the server
 
         :return: socket
     """
+    messages = [b"Message 1 from client.", b"Message 2 from client."]
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
     sock.settimeout(200)
@@ -81,8 +79,9 @@ def run_game(host, port, elem_dict):
         :param port: String that contains the server port address
         :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
     """
+    sel = selectors.DefaultSelector()
     server_addr = (host, port)
-    sock = set_socket(server_addr)
+    sock = set_socket(server_addr, sel)
     run = True
     try:
         game = ClientGamesHandler()
@@ -132,5 +131,16 @@ elem_dict = {"DISPLAYSURF": None, "FPSCLOCK": None, "BASICFONT": None, "HELP_SUR
              "NEW_RECT": None, "SHOTS_SURF": None, "SHOTS_RECT": None, "BIGFONT": None, "COUNTER_SURF": None,
              "COUNTER_RECT": None, "HBUTTON_SURF": None, "EXPLOSION_IMAGES": None}
 elem_dict = set_window(elem_dict)
+address = '127.0.0.1'
+port = 1233
+run_game(address, port, elem_dict)
 
-run_game('127.0.0.1', 1233, elem_dict)
+# def run_client(address, port, players):
+#     elem_dict = {"DISPLAYSURF": None, "FPSCLOCK": None, "BASICFONT": None, "HELP_SURF": None, "HELP_RECT": None,
+#                  "NEW_SURF": None,
+#                  "NEW_RECT": None, "SHOTS_SURF": None, "SHOTS_RECT": None, "BIGFONT": None, "COUNTER_SURF": None,
+#                  "COUNTER_RECT": None, "HBUTTON_SURF": None, "EXPLOSION_IMAGES": None}
+#     elem_dict = set_window(elem_dict)
+#     run_game(address, port, elem_dict, players)
+
+

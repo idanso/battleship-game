@@ -5,8 +5,13 @@ from pygame.locals import *
 import board
 
 # Set variables, like screen width and height
-# globals
+#### Globals ####
 
+DEFAULT_SHIP_NAME = None
+DEFAULT_BOOL_SHOT = False
+
+BOARD_WIDTH = 10  # Number of grids horizontally
+BOARD_HEIGHT = 10  # Number of grids vertically
 
 FPS = 30  # Determines the number of frames per second
 REVEALSPEED = 8  # Determines the speed at which the squares reveals after being clicked
@@ -411,6 +416,61 @@ def show_gameover_screen(shots_fired, elem_dict):
         elem_dict["FPSCLOCK"].tick()
 
 
+def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SHIP_NAME,
+                           bool_shot_default=DEFAULT_BOOL_SHOT):
+    """
+    Function generates a list of height x width tiles. The list will contain list
+    ('shipName', boolShot) set to their (default_value).
+
+    default_value -> boolean which tells what the value to set to
+    :returns: the list of tuples
+    """
+    default_tiles = [[[ship_name_default, bool_shot_default] for _ in range(width)] for _ in range(height)]
+    #  TODO: delete if unnecessary
+    # for x in range(height):
+    #     for y in range(width):
+    #         default_tiles[x][y] = (ship_name_default, bool_shot_default)
+    # default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
+    return default_tiles
+
+
+def add_ships_to_board(board, ships):
+    """
+    Function goes through a list of ships and add them randomly into a board.
+
+    board -> list of board tiles
+    ships -> list of ships to place on board
+    returns list of board tiles with ships placed on certain tiles
+    """
+    new_board = board[:]
+    ship_length = 0
+    for ship in ships:  # go through each ship declared in the list
+        # Randomly find a valid position that fits the ship
+        valid_ship_position = False
+        while not valid_ship_position:
+            xStartpos = random.randint(0, 9)
+            yStartpos = random.randint(0, 9)
+            isHorizontal = random.randint(0, 1)  # vertical or horizontal positioning
+            # Type of ship and their respective length
+            if 'battleship' in ship:
+                ship_length = 4
+            elif 'cruiser' in ship:
+                ship_length = 3
+            elif 'destroyer' in ship:
+                ship_length = 2
+            elif 'submarine' in ship:
+                ship_length = 1
+
+            # check if position is valid
+            valid_ship_position, ship_coords = make_ship_position(new_board,
+                                                                  xStartpos, yStartpos, isHorizontal, ship_length, ship)
+            # add the ship if it is valid
+            if valid_ship_position:
+                for coord in ship_coords:
+                    new_board[coord[0]][coord[1]][0] = ship
+    return new_board
+
+
 class ClientGamesHandler:
 
     def __init__(self):
@@ -481,6 +541,18 @@ class ClientGamesHandler:
             self.turn_of_player = 1
         else:
             self.turn_of_player = 0
+
+    def init_auto_generated_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
+        self.players_board[0] = generate_default_tiles(height, width)
+        self.players_board[1] = generate_default_tiles(height, width)
+
+        if ships_objs is None:
+            ship_objs = ['battleship', 'cruiser1', 'cruiser2', 'destroyer1', 'destroyer2',
+                         'destroyer3', 'submarine1', 'submarine2', 'submarine3',
+                         'submarine4']  # List of the ships available
+
+        self.players_board[0] = add_ships_to_board(self.players_board[0], ship_objs)
+        self.players_board[1] = add_ships_to_board(self.players_board[1], ship_objs)
 
 
     def encode(self):

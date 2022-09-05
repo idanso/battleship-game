@@ -8,9 +8,6 @@ client to server:
 
 {
 	"Action": "start game",
-	"Player_name":["idan", "shiran"],
-	"Board_1": [x,y],
-	"Board_2": [x,y],
 	"Quit": 2 // 0- first player quit, 1- second player quit, else- no one quit
 }
 
@@ -29,17 +26,20 @@ server to client:
 	"Finished": false
 }
 
-{#depracated
+{
 	"Action": start game,
+	"players": ['idan', 'shiran']
 	"Board_1": [x,y],
 	"Board_2": [x,y],
-}
-{
-    "Action": "ok"
 }
 
 {
 	"Action": game finished,
 	"Ainner": True
+}
+
+{
+	"Action": "scores",
+	"scores": [3,2]
 }
 	
