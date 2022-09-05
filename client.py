@@ -97,16 +97,18 @@ def run_game(host, port, elem_dict):
     try:
         # get board
         # my_board = receive_data(sock)
-        my_board = generate_default_tiles(10, 10)  # for test
+        player_board = generate_default_tiles(10, 10)  # for test
+        opponent_board = generate_default_tiles(10, 10)  # for test
         # add ships to board
         # send_data(ships,sock)
         ship_objs = ['battleship', 'cruiser1', 'cruiser2', 'destroyer1', 'destroyer2',
                       'destroyer3', 'submarine1', 'submarine2', 'submarine3',
                       'submarine4']  # List of the ships available
-        my_board = add_ships_to_board(my_board, ship_objs)  # call add_ships_to_board to add the list of ships to the main_board
+        player_board = add_ships_to_board(player_board, ship_objs)  # call add_ships_to_board to add the list of ships to the main_board
+        opponent_board = add_ships_to_board(opponent_board, ship_objs)  # call add_ships_to_board to add the list of ships to the main_board
         mousex, mousey = 0, 0  # location of mouse
         counter = []  # counter to track number of shots fired
-        xmarkers, ymarkers = set_markers(my_board)  # The numerical markers on each side of the board
+        xmarkers, ymarkers = set_markers(player_board)  # The numerical markers on each side of the board
 
         elem_dict["DISPLAYSURF"] = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE)
 
@@ -114,7 +116,7 @@ def run_game(host, port, elem_dict):
             init_elements(counter, elem_dict)
             # Draw the tiles onto the board and their respective markers
 
-            draw_board(my_board, elem_dict, False)
+            draw_board(player_board, elem_dict, False)
             draw_markers(xmarkers, ymarkers, elem_dict)
             pygame.display.update()
 
@@ -144,15 +146,15 @@ def run_game(host, port, elem_dict):
 
 
             if tilex != None and tiley != None:
-                if not my_board[tilex][tiley][1]:  # if the tile the mouse is on is not revealed
+                if not player_board[tilex][tiley][1]:  # if the tile the mouse is on is not revealed
                     draw_highlight_tile(tilex, tiley, elem_dict)  # draws the hovering highlight over the tile
-                if not my_board[tilex][tiley][1] and mouse_clicked:  # if the mouse is clicked on the not revealed tile
-                    reveal_tile_animation(my_board, [(tilex, tiley)], elem_dict)
-                    my_board[tilex][tiley][1] = True  # set the tile to now be revealed
-                    if check_revealed_tile(my_board, (tilex, tiley)):  # if the clicked position contains a ship piece
+                if not player_board[tilex][tiley][1] and mouse_clicked:  # if the mouse is clicked on the not revealed tile
+                    reveal_tile_animation(player_board, [(tilex, tiley)], elem_dict)
+                    player_board[tilex][tiley][1] = True  # set the tile to now be revealed
+                    if check_revealed_tile(player_board, (tilex, tiley)):  # if the clicked position contains a ship piece
                         left, top = left_top_coords_tile(tilex, tiley)
                         # blowup_animation((left, top))
-                        if check_for_win(my_board):  # check for a win
+                        if check_for_win(player_board):  # check for a win
                             counter.append((tilex, tiley))
                             return len(counter)  # return the amount of shots taken
                     counter.append((tilex, tiley))
