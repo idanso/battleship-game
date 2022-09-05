@@ -70,6 +70,23 @@ def set_socket(server_addr, sel):
     sel.register(sock, events, data=data)
     return sock
 
+def init_names_first_game(sock, game):
+    """
+        function that gets the players name from the server and send the boards after that
+
+        :param game: of type ClientGamesHandler, is used to keep up with important things involving the game like board, player
+        turn and etc...
+        :param sock: the socket object used to send data to the server
+    """
+
+    send_message(sock, {"Action": "Start_server"})
+    received_data = receive_message(sock)
+    game.set_names(received_data["Players"][0], received_data["Players"][1])
+    game.init_auto_generated_boards()
+    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], ["Quit"]: None}
+    send_message(sock, data)
+
+
 
 # start_connections('127.0.0.1', 1233)
 def run_game(host, port, elem_dict):
@@ -85,7 +102,8 @@ def run_game(host, port, elem_dict):
     run = True
     try:
         game = ClientGamesHandler()
-        start_new_game(game, sock)
+
+        init_names_first_game(sock, game)
         mousex, mousey = 0, 0  # location of mouse
         counter = []  # counter to track number of shots fired
         xmarkers, ymarkers = set_markers(

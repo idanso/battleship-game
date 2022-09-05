@@ -422,8 +422,12 @@ def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SH
     Function generates a list of height x width tiles. The list will contain list
     ('shipName', boolShot) set to their (default_value).
 
-    default_value -> boolean which tells what the value to set to
-    :returns: the list of tuples
+    :param bool_shot_default: boolean which tells what the value to set if the ships where hit
+    :param height: int; that tells the board height
+    :param width: int; that tells the board width
+    :param ship_name_default: List; containing the ships name
+
+    :returns: list of tuples
     """
     default_tiles = [[[ship_name_default, bool_shot_default] for _ in range(width)] for _ in range(height)]
     #  TODO: delete if unnecessary
@@ -438,9 +442,10 @@ def add_ships_to_board(board, ships):
     """
     Function goes through a list of ships and add them randomly into a board.
 
-    board -> list of board tiles
-    ships -> list of ships to place on board
-    returns list of board tiles with ships placed on certain tiles
+    :param board: list of board tiles
+    :param ships: list of ships to place on board
+
+    :return: list of board tiles with ships placed on certain tiles
     """
     new_board = board[:]
     ship_length = 0
@@ -543,6 +548,13 @@ class ClientGamesHandler:
             self.turn_of_player = 0
 
     def init_auto_generated_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
+        """
+                    a function that generatets the default tiles
+
+                    :param height: int; the board height
+                    :param width: int; the board width
+                    :param ships_objs: list; containing the ships names
+                """
         self.players_board[0] = generate_default_tiles(height, width)
         self.players_board[1] = generate_default_tiles(height, width)
 
@@ -604,7 +616,13 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
     :param sock: Socket object used to send data to the server
     """
     if received_data["Action"] == "start_game":
-        game.add_boards(received_data["Board_1"], received_data["Board_2"])
+        if not received_data["Restart"]:
+            game.set_names(received_data["Players"][0], received_data["Players"][1])
+
+
+    elif received_data["Action"] == "Init":
+        game.set_names(received_data["Players"][0], received_data["Players"][1])
+
 
     elif received_data["Action"] == "hit":
         if received_data["Success"] == True:
@@ -645,7 +663,10 @@ def start_new_game(game, sock, quit = False):
     :param sock: Socket object used to send data to the server
     :param quit: boolean to tell the server which player pressed the new game button (Quit = None mean we just started the first game)
     """
-    data = {"Action": "start_game", "Player_name": game.players_name, "Board_1": game.players_board[0], "Board_2": game.players_board[1]}
+
+    game.init_auto_generated_boards()
+
+    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1]}
     if quit:
         data["Quit"] = game.turn_of_player
     else:
