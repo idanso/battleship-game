@@ -2,7 +2,7 @@ import random, sys, pygame
 
 from shared import *
 from pygame.locals import *
-import board
+#import board
 
 # Set variables, like screen width and height
 #### Globals ####
@@ -437,6 +437,53 @@ def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SH
     # default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
     return default_tiles
 
+def has_adjacent(board, x_pos, y_pos, ship):
+    """
+    Funtion checks if a ship has adjacent ships
+
+    board -> list of board tiles
+    xPos -> x-coordinate of first ship piece
+    yPos -> y-coordinate of first ship piece
+    ship -> the ship being checked for adjacency
+    returns true if there are adjacent ships and false if there are no adjacent ships
+    """
+    for x in range(x_pos - 1, x_pos + 2):
+        for y in range(y_pos - 1, y_pos + 2):
+            if (x in range(10)) and (y in range(10)) and \
+                    (board[x][y][0] not in (ship, None)):
+                return True
+    return False
+
+def make_ship_position(board, x_pos, y_pos, isHorizontal, length, ship):
+    """
+    Function makes a ship on a board given a set of variables
+
+    board -> list of board tiles
+    xPos -> x-coordinate of first ship piece
+    yPos -> y-coordinate of first ship piece
+    isHorizontal -> True if ship is horizontal
+    length -> length of ship
+    returns tuple: True if ship position is valid and list ship coordinates
+    """
+    ship_coordinates = []  # the coordinates the ship will occupy
+    if isHorizontal:
+        for i in range(length):
+            if (i + x_pos > 9) or (board[i + x_pos][y_pos][0] is not None) or \
+                    has_adjacent(board, i + x_pos, y_pos,
+                                 ship):  # if the ship goes out of bound, hits another ship, or is adjacent to another ship
+                return False, ship_coordinates  # then return false
+            else:
+                ship_coordinates.append((i + x_pos, y_pos))
+    else:
+        for i in range(length):
+            if (i + y_pos > 9) or (board[x_pos][i + y_pos][0] is not None) or \
+                    has_adjacent(board, x_pos, i + y_pos,
+                                 ship):  # if the ship goes out of bound, hits another ship, or is adjacent to another ship
+                return False, ship_coordinates  # then return false
+            else:
+                ship_coordinates.append((x_pos, i + y_pos))
+    return True, ship_coordinates  # ship is successfully added
+
 
 def add_ships_to_board(board, ships):
     """
@@ -567,45 +614,45 @@ class ClientGamesHandler:
         self.players_board[1] = add_ships_to_board(self.players_board[1], ship_objs)
 
 
-    def encode(self):
-        #TODO: add doc
-        player_board = board.Board()
-        opponent_board = board.Board()
-
-        for i, row in enumerate(self.players_board[self.turn_of_player]):
-            for c, tile in enumerate(row):
-                if tile[0]:  # if ship exist
-                    player_board.ships[i][c] = True
-                    if tile[1]:  # if hitted
-                        player_board.state[i][c] = board.SHIP_CONFLICT
-                    else:
-                        player_board.state[i][c] = board.COVERED
-                else:
-                    player_board.ships[i][c] = False
-                    if tile[1]:  # if hitted
-                        player_board.state[i][c] = board.MISS
-                    else:
-                        player_board.state[i][c] = board.COVERED
-
-        for i, row in enumerate(self.get_board_of_opponent()):
-            for c, tile in enumerate(row):
-                if tile[0]:  # if ship exist
-                    player_board.ships[i][c] = True
-                    if tile[1]:  # if hitted
-                        player_board.state[i][c] = board.SHIP_CONFLICT
-                    else:
-                        player_board.state[i][c] = board.COVERED
-                else:
-                    player_board.ships[i][c] = False
-                    if tile[1]:  # if hitted
-                        player_board.state[i][c] = board.MISS
-                    else:
-                        player_board.state[i][c] = board.COVERED
-
-
+    # def encode(self):
+    #     #TODO: add doc
+    #     player_board = board.Board()
+    #     opponent_board = board.Board()
+    #
+    #     for i, row in enumerate(self.players_board[self.turn_of_player]):
+    #         for c, tile in enumerate(row):
+    #             if tile[0]:  # if ship exist
+    #                 player_board.ships[i][c] = True
+    #                 if tile[1]:  # if hitted
+    #                     player_board.state[i][c] = board.SHIP_CONFLICT
+    #                 else:
+    #                     player_board.state[i][c] = board.COVERED
+    #             else:
+    #                 player_board.ships[i][c] = False
+    #                 if tile[1]:  # if hitted
+    #                     player_board.state[i][c] = board.MISS
+    #                 else:
+    #                     player_board.state[i][c] = board.COVERED
+    #
+    #     for i, row in enumerate(self.get_board_of_opponent()):
+    #         for c, tile in enumerate(row):
+    #             if tile[0]:  # if ship exist
+    #                 player_board.ships[i][c] = True
+    #                 if tile[1]:  # if hitted
+    #                     player_board.state[i][c] = board.SHIP_CONFLICT
+    #                 else:
+    #                     player_board.state[i][c] = board.COVERED
+    #             else:
+    #                 player_board.ships[i][c] = False
+    #                 if tile[1]:  # if hitted
+    #                     player_board.state[i][c] = board.MISS
+    #                 else:
+    #                     player_board.state[i][c] = board.COVERED
 
 
-def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = None):
+
+
+def operation_mapper(game: ClientGamesHandler, received_data, logger, sock = None, elem_dict=None):
     """
     this function is used to map the different actions that were received from the server with there corresponding actions
 
@@ -615,12 +662,12 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
     :param received_data: Dict that was received from the server
     :param sock: Socket object used to send data to the server
     """
-    if received_data["Action"] == "start_game":
-        if not received_data["Restart"]:
-            game.set_names(received_data["Players"][0], received_data["Players"][1])
+    # if received_data["Action"] == "start_game":
+    #     if not received_data["Restart"]:
+    #         game.set_names(received_data["Players"][0], received_data["Players"][1])
 
 
-    elif received_data["Action"] == "Init":
+    if received_data["Action"] == "Init":
         game.set_names(received_data["Players"][0], received_data["Players"][1])
 
 
@@ -639,7 +686,7 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
                 for event in pygame.event.get():
                     if event.type == MOUSEBUTTONUP:
                         if elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
-                            start_new_game(game, sock)
+                            start_new_game(game, sock, logger)
                             new_game_preeseed = True
             # TODO: show result screen
     elif received_data["Action"] == "ok":
@@ -653,7 +700,7 @@ def operation_mapper(elem_dict, game: ClientGamesHandler, received_data, sock = 
         # TODO: consider throwing error
 
 
-def start_new_game(game, sock, quit = False):
+def start_new_game(game, sock, logger, quit = False):
     """
     this function is used to send to the server that the client is starting a new game and receive from the server
     the new boards
@@ -671,7 +718,7 @@ def start_new_game(game, sock, quit = False):
         data["Quit"] = game.turn_of_player
     else:
         data["Quit"] = None
-    send_message(sock, data)
+    send_message(sock, data, logger)
     # get board
-    recv_data = receive_message(sock)
-    operation_mapper(recv_data)
+    # recv_data = receive_message(sock)
+    # operation_mapper(game=game, received_data=recv_data)

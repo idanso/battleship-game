@@ -1,5 +1,6 @@
 import socket
 import selectors
+import traceback
 import types
 import server_service
 from shared import *
@@ -30,11 +31,14 @@ def service_connection(key, mask):
     if mask & selectors.EVENT_READ:
         try:
             logging.info("received message data from address: " + str(data.addr))
-            recv_data = receive_message(sock)  # Should be ready to read
+            recv_data = receive_message(sock, logging)  # Should be ready to read
             if recv_data:
                 operation_mapper(sock, data.addr, recv_data)
+            else:
+                raise Exception("Error in receiving socket data")
         except Exception as e:
-            print(e)
+            traceback.print_exc()  # TODO: delete when finish
+            logging.error(traceback.format_exc())
 
 
 # TODO: consider replacing actions string to enums
@@ -46,25 +50,30 @@ def operation_mapper(sock, address, received_data):
             game.status = server_service.GameStatus.ENDED
             restart = True
             if received_data["Quit"] == 0:
-                game.players[1]["win"] += 1
-                game.players[0]["lose"] += 1
+                (server_service.User)(game.players[1]).score["win"] += 1
+                (server_service.User)(game.players[0]).score["lose"] += 1
             elif received_data["Quit"] == 1:
-                game.players[0]["win"] += 1
-                game.players[1]["lose"] += 1
+                (server_service.User)(game.players[0]).score["win"] += 1
+                (server_service.User)(game.players[1]).score["lose"] += 1
+            game_handler.readyPlayers = [(server_service.User)(game.players[0]).name, (server_service.User)(game.players[1]).name]
 
 
         game_handler.start_game(address,game_handler.readyPlayers, [received_data["Board_1"], received_data["Board_2"]])
-
-        data_dict = dict({"Action": "start_game", "Players": game.players, "Restart": restart})
-        send_message(sock, data_dict)
+        game_handler.readyPlayers = [None, None]
+        # data_dict = dict({"Action": "start_game", "Restart": restart})
+        # send_message(sock, data_dict)
 
     if received_data["Action"] == "start_server":
+        game_handler.readyPlayers = ['idan', 'shiran'] # TODO: only for testing need to delete
+        for player in game_handler.readyPlayers: # TODO: only for testing need to delete
+            if player not in game_handler.users:
+                game_handler.add_user(server_service.User(player))
         data_dict = dict({"Action": "start_game", "Players": game_handler.readyPlayers, "Restart": False})
-        send_message(sock, data_dict)
+        send_message(sock, data_dict, logging)
     else:
         game = game_handler.get_game_by_address(address)
         if not game:
-            logging.ERROR("couldn't find game from address: %s", received_data["Address"])
+            logging.error("couldn't find game from address: %s", address)
             # TODO: consider throwing error
             return
         if received_data["Action"] == "attack":
@@ -81,7 +90,7 @@ def operation_mapper(sock, address, received_data):
                     game.players[1]["lose"] += 1
                     game.status = server_service.GameStatus.ENDED
             data_dict = dict({"Action": "hit", "Success": hit_res, "Finished": win_res})
-            send_message(sock, data_dict)
+            send_message(sock, data_dict, logging)
 
         elif received_data["Action"] == "close_connection":
             logging.info(f"Closing connection to {address}")
@@ -90,14 +99,14 @@ def operation_mapper(sock, address, received_data):
             sel.unregister(sock)
             sock.close()
         else:
-            logging.ERROR("unknown Action: %s", received_data["Action"])
+            logging.error("unknown Action: %s", received_data["Action"])
             # TODO: consider throwing error
 
 
 # set logger
 format_data = "%d_%m_%y_%H_%M"
 date_time = datetime.now().strftime(format_data)
-logging.basicConfig(filename='Log/log_' + date_time + '.log', filemode='w',
+logging.basicConfig(filename='Log/Server_log_' + date_time + '.log', filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s : %(message)s')
 
@@ -116,9 +125,10 @@ logging.info(f"Listening on {(host, port)}")
 lsock.setblocking(False)
 sel.register(lsock, selectors.EVENT_READ, data=None)
 
-
+test_start_client = 0 # TODO: for testing to delete
 try:
     while True:
+#        server_service.start_client(game_handler)
         events = sel.select(timeout=None)
         for key, mask in events:
             if key.data is None:
@@ -129,5 +139,6 @@ except KeyboardInterrupt:
     print("Caught keyboard interrupt, exiting")
 finally:
     sel.close()
+    logging.info("socket closed")
     game_handler.finish_all_games()
     server_service.save_data_to_file(game_handler)

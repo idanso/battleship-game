@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import sys
 import socket
@@ -8,7 +9,10 @@ import pygame
 import client_service as cs
 from pygame.locals import *
 from shared import *
+import logging
 
+sel = selectors.DefaultSelector()
+messages = [b"Message 1 from client.", b"Message 2 from client."]
 
 def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
     """
@@ -34,7 +38,7 @@ def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
                 elem_dict["DISPLAYSURF"].fill(cs.BGCOLOR)
                 cs.show_help_screen(elem_dict)  # Show the help screen
             elif elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
-                cs.start_new_game(game, sock, True)
+                cs.start_new_game(game, sock, logging, True)
 
                 #todo: new game button
                 #run_game('127.0.0.1', 1233, elem_dict)  # goto main, which resets the game
@@ -46,9 +50,7 @@ def check_events_pygame(elem_dict, mousex, mousey, sock = None, game =None):
     return mousex, mousey, mouse_clicked
 
 
-
-
-def set_socket(server_addr, sel):
+def set_socket(server_addr):
     """
         this function is used to create the socket
         :param server_addr: Tuple that contains the ip address and port of the server
@@ -79,12 +81,12 @@ def init_names_first_game(sock, game):
         :param sock: the socket object used to send data to the server
     """
 
-    send_message(sock, {"Action": "Start_server"})
-    received_data = receive_message(sock)
+    send_message(sock, {"Action": "start_server"}, logging)
+    received_data = receive_message(sock, logging)
     game.set_names(received_data["Players"][0], received_data["Players"][1])
     game.init_auto_generated_boards()
-    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], ["Quit"]: None}
-    send_message(sock, data)
+    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], "Quit": None}
+    send_message(sock, data, logging)
 
 
 
@@ -96,9 +98,8 @@ def run_game(host, port, elem_dict):
         :param port: String that contains the server port address
         :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
     """
-    sel = selectors.DefaultSelector()
     server_addr = (host, port)
-    sock = set_socket(server_addr, sel)
+    sock = set_socket(server_addr)
     run = True
     try:
         game = cs.ClientGamesHandler()
@@ -130,27 +131,35 @@ def run_game(host, port, elem_dict):
                 if not game.get_if_opponent_reveled_tile(
                         [tilex, tiley]) and mouse_clicked:  # if the mouse is clicked on the not revealed tile
                     send_message(sock, {"Action": "attack", "Hitted_player": game.opponent_number(),
-                                        "Location": [tilex, tiley]})
+                                        "Location": [tilex, tiley]}, logging)
                     game.hit_on_board(tilex, tiley)  # turn opponent board on position to revealed
-                    cs.operation_mapper(elem_dict, game, receive_message(sock), sock)
+                    cs.operation_mapper(game=game, received_data=receive_message(sock, logging), sock=sock, elem_dict=elem_dict, logger=logging)
                     counter.append((tilex, tiley))
 
     finally:
         data_dict = dict({"Action": "close_connection"})
-        send_message(sock, data_dict)
-        print("socket closed")
+        send_message(sock, data_dict, logging)
         sock.close()
+        logging.info("socket closed")
 
-#
 
+
+# set logger
+format_data = "%d_%m_%y_%H_%M"
+date_time = datetime.now().strftime(format_data)
+logging.basicConfig(filename='Log/Client_log_' + date_time + '.log', filemode='w',
+                    level=logging.DEBUG,
+                    format='%(asctime)s : %(message)s')
 
 elem_dict = {"DISPLAYSURF": None, "FPSCLOCK": None, "BASICFONT": None, "HELP_SURF": None, "HELP_RECT": None,
              "NEW_SURF": None,
              "NEW_RECT": None, "SHOTS_SURF": None, "SHOTS_RECT": None, "BIGFONT": None, "COUNTER_SURF": None,
              "COUNTER_RECT": None, "HBUTTON_SURF": None, "EXPLOSION_IMAGES": None}
+
 elem_dict = cs.set_window(elem_dict)
 address = '127.0.0.1'
 port = 1233
+
 run_game(address, port, elem_dict)
 
 # def run_client(address, port, players):

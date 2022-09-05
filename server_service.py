@@ -1,9 +1,9 @@
+import os
 import random
 
 import uuid
 import enum
 import pickle
-import client
 
 #### Globals ####
 from shared import send_message
@@ -36,9 +36,12 @@ class User:
 
 
 class Game:
-    def __init__(self, address, player1, player2):
+    def __init__(self, address, players=None):
         self.id = uuid.uuid4()
-        self.players = [player1, player2]
+        if players:
+            self.players = players
+        else:
+            self.players = [None, None]
         self.address = address
         # self.score = [0, 0]
         self.boards = [None, None]
@@ -60,7 +63,8 @@ class Game:
         self.players = players
 
     def set_boards(self, board1, board2):
-        self.boards[board1, board2]
+        self.boards[0] = board1
+        self.boards[1] = board2
 
 
 class ServerGamesHandler:
@@ -89,7 +93,7 @@ class ServerGamesHandler:
 
         game.set_players([self.get_user_by_name(players[0]), self.get_user_by_name(players[0])])
         if boards:
-            game.set_boards(boards)
+            game.set_boards(boards[0], boards[1])
         # else:
         #     game.init_auto_generated_boards()
 
@@ -297,12 +301,12 @@ def has_adjacent(board, x_pos, y_pos, ship):
                 return True
     return False
 
-def start_client(gameHandler:ServerGamesHandler, players=('idan', 'shiran')):
-    client.run_client('127.0.0.1', 1233)
+def start_client(game_handler:ServerGamesHandler, players=('idan', 'shiran')):
+    exec(open("client.py").read())
     # TODO: consider adding sleep
     for player in players:
-        if player not in gameHandler.users:
-            gameHandler.add_user(User(player))
+        if player not in game_handler.users:
+            game_handler.add_user(User(player))
 
-    gameHandler.readyPlayers = players
+    game_handler.readyPlayers = players
 
