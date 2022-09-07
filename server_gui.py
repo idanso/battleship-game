@@ -6,7 +6,10 @@ from server_service import start_client
 class ServerScreen(tk.Frame):
     def __init__(self, window):
 
-        window.wm_title("Server")
+        # some screen settings
+        window.attributes("-topmost", True)
+        window.title('Battleship Server')
+        window.resizable(True, True)
 
         tk.Frame.__init__(self, master=window, width=500, height=500)
 
@@ -103,5 +106,5 @@ def show_screen():
     ServerScreen(root).pack(expand=True, fill='both')
     root.mainloop()
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    show_screen()

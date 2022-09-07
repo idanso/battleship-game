@@ -1,0 +1,195 @@
+import selectors
+import socket
+import shared
+
+import time
+import tkinter as tk
+from tkinter import *
+from tkinter import ttk
+from tkinter.font import Font
+import json
+import client_service as cs
+import logging
+import sys
+import os
+from datetime import datetime
+
+BOARD_SIZE = 10
+TILE_WIDTH = 4
+TILE_HEIGHT = 2
+BUTTON_WIDTH = 10
+BUTTON_HEIGHT = 1
+
+HEADER = 64  # each message will have a header to tell the message size
+PORT = 5050
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
+GET_BOARD_MESSAGE = "GET_BOARD"
+GET_TURN_MESSAGE = "GET_TURN"
+WAIT_TURN_MESSAGE = "WAIT_TURN"
+TRY_HIT_MESSAGE = "TRY_HIT"
+RESULT_HIT_MESSAGE = "RESULT_HIT"
+PID_MESSAGE = "PID"
+GAME_OVER = "GAME_OVER"
+YOUR_TURN = "Your turn, Select opponent battleship location"
+OPPONENT_TURN = "Opponent Turn, please wait"
+BLACK = (0, 0, 0)
+GREEN = "#33FF33"
+WHITE = (255, 255, 255)
+BLUE = "#0080FF"
+RED = "#FF0000"
+GREY = "#C0C0C0"
+XL_SHIP = 4
+L_SHIP = 3
+M_SHIP = 2
+S_SHIP = 1
+
+sel = selectors.DefaultSelector()
+messages = [b"Message 1 from client.", b"Message 2 from client."]
+
+
+def set_socket(server_addr):
+    """
+        this function is used to create the socket
+        :param server_addr: Tuple that contains the ip address and port of the server
+
+        :return: socket
+    """
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setblocking(False)
+    sock.settimeout(200)
+    sock.connect_ex(server_addr)
+    events = selectors.EVENT_READ | selectors.EVENT_WRITE
+    data = types.SimpleNamespace(
+        msg_total=sum(len(m) for m in messages),
+        recv_total=0,
+        messages=messages.copy(),
+        outb=b"",
+    )
+    sel.register(sock, events, data=data)
+    return sock
+
+
+class client_window(tk.Tk):
+    """
+    client_window represents a client with it's screen and data
+    """
+
+    def __init__(self, server_addr):
+        """
+        init of a client
+        """
+        super().__init__()
+        # some screen settings
+        self.attributes("-topmost", True)
+        self.title('Battleship')
+        self.resizable(True, True)
+
+        self.font = Font(family='Arial', size=14, weight='normal')
+
+        # Main frame so button be at middle under the boards
+        self.main_frame = Frame(self, padx=5, pady=5)
+        self.main_frame.pack(side=TOP)
+        # Makes the frame for each side so player label will always be in the center of board no matter if we resize
+        self.left_frame = Frame(self.main_frame, padx=5, pady=5)
+        self.left_frame.pack(side=LEFT, padx=25, pady=10)
+        self.right_frame = Frame(self.main_frame, padx=5, pady=5)
+        self.right_frame.pack(side=RIGHT, padx=25, pady=10)
+
+        # create the frames for the players boards
+        self.myframe = Frame(self.right_frame, padx=5, pady=5)
+        self.myframe.pack(side=BOTTOM, padx=0, pady=0)
+        self.opponent_frame = Frame(self.left_frame, padx=5, pady=5)
+        self.opponent_frame.pack(side=BOTTOM, padx=0, pady=0)
+
+        # set text variables for player board name
+        self.my_name = StringVar()
+        self.my_name.set("idan")
+        self.opponent_name = StringVar()
+        self.opponent_name.set("shiran")
+
+        # make player board name labels
+        self.my_name_label = Label(self.right_frame, textvariable=self.my_name, font=self.font).pack(side=TOP, pady=5,
+                                                                                                     padx=200)
+        self.opponent_name_label = Label(self.left_frame, textvariable=self.opponent_name, font=self.font).pack(
+            side=TOP, pady=5, padx=200)
+
+        # create the boards on the display by using buttons
+        self.create_boards()
+        self.update_colors()
+
+        self.game = cs.ClientGamesHandler()
+        self.sock = set_socket(server_addr)
+        self.game_ended = False
+        #Todo: do we need to send server "start_server or we can use "start_game"
+        cs.init_names_first_game(self.sock, self.game)
+
+        # set players name on screen
+        self.my_name.set(self.game.get_my_name())
+        self.opponent_name.set(self.game.get_opponent_name())
+
+        # new game button
+        self.new_game_button = Button(self, width=BUTTON_WIDTH, height=BUTTON_HEIGHT, text="New Game", font=self.font,
+                                      bg=GREY)
+        self.new_game_button.bind("<Button-1>", self.new_game())
+        self.new_game_button.pack(side=BOTTOM, padx=25, pady=20)
+
+    def new_game(self):
+        """
+        return the state of the buttons on the opponent board to work and send the server that we want to start a new
+        game and get the new boards
+        """
+        for i in range(BOARD_SIZE):
+            for j in range(BOARD_SIZE):
+                self.opponent_frame.grid_slaves(row=i, column=j)[0].config(state="normal")
+        cs.start_new_game(self.game, self.sock, logging, quit=self.game_ended)
+        self.game_ended = False
+        print("new game")
+
+    def create_boards(self):
+        """
+        this function creates the buttons that serve as tile in the playing board, the opponent playing board is
+        disabled so the buttons cant be pressed
+        """
+        for row in range(1, BOARD_SIZE + 1):
+            for col in range(1, BOARD_SIZE + 1):
+                button = Button(self.opponent_frame, width=TILE_WIDTH, height=TILE_HEIGHT)
+                button.bind("<Button-1>", lambda temp=0, x=row, y=col: self.click(x, y))
+                button.grid(row=row, column=col)
+
+                button_opponent = Button(self.myframe, width=TILE_WIDTH, height=TILE_HEIGHT, state="disable")
+                button_opponent.grid(row=row, column=col, sticky="nsew")
+
+    def update_colors(self):
+        """
+            this function updates the board colors according to the ships state and the player who is currently playing
+        """
+        for i, row in enumerate(self.game.get_my_board()):
+            for j, tile in enumerate(row):
+                if tile[0]:  # if there is a ship in this tile
+                    if tile[1]:  # the ship was hit
+                        self.myframe.grid_slaves(row=i, column=j)[0].configure(bg=RED)
+                    else:
+                        self.myframe.grid_slaves(row=i, column=j)[0].configure(bg=GREEN)
+                else:
+                    self.myframe.grid_slaves(row=i, column=j)[0].configure(bg=BLUE)
+
+        for i, row in enumerate(self.game.get_board_of_opponent()):
+            for j, tile in enumerate(row):
+                if tile[0] and tile[1]:  # if there is a ship in this tile and the ship was hit
+                    self.opponent_frame.grid_slaves(row=i, column=j)[0].configure(bg=RED)
+                else:
+                    self.opponent_frame.grid_slaves(row=i, column=j)[0].configure(bg=BLUE)
+
+    def click(self, row, col):
+        shared.send_message(self.sock, {"Action": "attack", "Hitted_player": self.game.opponent_number(),
+                                        "Location": [row, col]}, logging)
+        self.game.hit_on_board(row, col)  # turn opponent board on position to revealed
+        cs.operation_mapper(game=self.game, received_data=shared.receive_message(self.sock, logging), sock=self.sock,
+                            logger=logging, client_win=self)
+
+
+
+temp = client_window(('127.0.0.1', 1233))
+temp.mainloop()

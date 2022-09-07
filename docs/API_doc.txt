@@ -8,8 +8,6 @@ client to server:
 
 {
 	"Action": "start_game",
-	"Board_1": [x,y],
-	"Board_2": [x,y],
 	"Quit": 2 // 0- first player quit, 1- second player quit, else- no one quit
 }
 
@@ -31,10 +29,13 @@ server to client:
 	"Action": "hit",
 	"Success": true,
 	"Finished": false
+	"Winner": 1/0 (representing the winner player number)
 }
 
 {
 	"Action": "start_game",
+	"Board_1": [x,y],
+	"Board_2": [x,y],
 	"restart": True
 
 }

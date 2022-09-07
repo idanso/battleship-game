@@ -82,7 +82,6 @@ def init_names_first_game(sock, game):
     send_message(sock, {"Action": "start_server"}, logging)
     received_data = receive_message(sock, logging)
     game.set_names(received_data["Players"][0], received_data["Players"][1])
-    game.init_auto_generated_boards()
     data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], "Quit": None}
     send_message(sock, data, logging)
 

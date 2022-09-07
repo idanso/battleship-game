@@ -1,12 +1,14 @@
 import random, sys, pygame
-
+import logging
 from shared import *
+from playsound import playsound
 from pygame.locals import *
+
 #import board
 
 # Set variables, like screen width and height
 #### Globals ####
-
+BOARD_SIZE = 10
 DEFAULT_SHIP_NAME = None
 DEFAULT_BOOL_SHOT = False
 
@@ -560,7 +562,6 @@ class ClientGamesHandler:
         """
         self.last_attack = [x, y]
         self.get_board_of_opponent()[x][y][1] = True
-        self.change_turn()
 
     def opponent_number(self):
         """
@@ -576,6 +577,24 @@ class ClientGamesHandler:
             :return: List; the board of the opponent
         """
         return self.players_board[self.turn_of_player - 1]
+
+    def get_opponent_name(self):
+        """
+            :return: String; the name of the opponent
+        """
+        return self.players_board[self.turn_of_player - 1]
+
+    def get_my_name(self):
+        """
+            :return: String; the name of the current player
+        """
+        return self.players_board[self.turn_of_player]
+
+    def get_my_board(self):
+        """
+            :return: List; the board of the opponent
+        """
+        return self.players_board[self.turn_of_player]
 
     def get_if_opponent_reveled_tile(self, tile):
         """
@@ -614,49 +633,27 @@ class ClientGamesHandler:
         self.players_board[1] = add_ships_to_board(self.players_board[1], ship_objs)
 
 
-    # def encode(self):
-    #     #TODO: add doc
-    #     player_board = board.Board()
-    #     opponent_board = board.Board()
-    #
-    #     for i, row in enumerate(self.players_board[self.turn_of_player]):
-    #         for c, tile in enumerate(row):
-    #             if tile[0]:  # if ship exist
-    #                 player_board.ships[i][c] = True
-    #                 if tile[1]:  # if hitted
-    #                     player_board.state[i][c] = board.SHIP_CONFLICT
-    #                 else:
-    #                     player_board.state[i][c] = board.COVERED
-    #             else:
-    #                 player_board.ships[i][c] = False
-    #                 if tile[1]:  # if hitted
-    #                     player_board.state[i][c] = board.MISS
-    #                 else:
-    #                     player_board.state[i][c] = board.COVERED
-    #
-    #     for i, row in enumerate(self.get_board_of_opponent()):
-    #         for c, tile in enumerate(row):
-    #             if tile[0]:  # if ship exist
-    #                 player_board.ships[i][c] = True
-    #                 if tile[1]:  # if hitted
-    #                     player_board.state[i][c] = board.SHIP_CONFLICT
-    #                 else:
-    #                     player_board.state[i][c] = board.COVERED
-    #             else:
-    #                 player_board.ships[i][c] = False
-    #                 if tile[1]:  # if hitted
-    #                     player_board.state[i][c] = board.MISS
-    #                 else:
-    #                     player_board.state[i][c] = board.COVERED
+def init_names_first_game(sock, game):
+    """
+        function that gets the players name from the server and send the boards after that
+
+        :param game: of type ClientGamesHandler, is used to keep up with important things involving the game like board, player
+        turn and etc...
+        :param sock: the socket object used to send data to the server
+    """
+
+    send_message(sock, {"Action": "start_server"}, logging)
+    received_data = receive_message(sock, logging)
+    game.set_names(received_data["Players"][0], received_data["Players"][1])
+    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], "Quit": None}
+    send_message(sock, data, logging)
 
 
-
-
-def operation_mapper(game: ClientGamesHandler, received_data, logger, sock = None, elem_dict=None):
+def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win = None, sock = None):
     """
     this function is used to map the different actions that were received from the server with there corresponding actions
 
-    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+    :param client_win: of type client_window, contain the tkinter display and the elements it needs to work
     :param game: of type ClientGamesHandler, is used to keep up with important things involving the game like board, player turn and
     etc...
     :param received_data: Dict that was received from the server
@@ -670,25 +667,35 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, sock = Non
     if received_data["Action"] == "Init":
         game.set_names(received_data["Players"][0], received_data["Players"][1])
 
+    elif received_data["Action"] == "start_game":
+        game.set_boards(received_data["Board_1"],received_data["Board_2"])
+        if received_data["restart"]:
+            client_win.game_ended = False
+
 
     elif received_data["Action"] == "hit":
+        #TODO: fix sound files maybe use pygame
         if received_data["Success"] == True:
-            reveal_tile_animation(game.last_attack, elem_dict, True)
-            left, top = left_top_coords_tile(game.last_attack[0], game.last_attack[1])
-            blowup_animation((left, top), elem_dict)
+            playsound('soundFiles\hit-water.wav')
         else:
-            reveal_tile_animation(game.last_attack, elem_dict)
+            playsound('soundFiles\sea-explosion.wav')
 
         if received_data["Finished"]:
-            print("Game ended")
-            new_game_preeseed = False
-            while(not new_game_preeseed):
-                for event in pygame.event.get():
-                    if event.type == MOUSEBUTTONUP:
-                        if elem_dict["NEW_RECT"].collidepoint(event.pos):  # if the new game button is clicked on
-                            start_new_game(game, sock, logger)
-                            new_game_preeseed = True
+            client_win.game_ended = True
+            for i in range(BOARD_SIZE):
+                for j in range(BOARD_SIZE ):
+                    client_win.opponent_frame.grid_slaves(row=i, column=j)[0].config(state="disable")
+            if received_data["Winner"] == game.turn_of_player:
+                client_win.my_name.set(game.get_my_name() + " Has Won!")
+            else:
+                client_win.opponent_name.set(game.get_opponent_name() + " Has Won!")
+        else: # if game didn't finished swap turns and update boards
+            game.change_turn()
+            client_win.update_colors()
+
+
             # TODO: show result screen
+
     elif received_data["Action"] == "ok":
         pass
 
@@ -711,14 +718,12 @@ def start_new_game(game, sock, logger, quit = False):
     :param quit: boolean to tell the server which player pressed the new game button (Quit = None mean we just started the first game)
     """
 
-    game.init_auto_generated_boards()
-
-    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1]}
+    data = {"Action": "start_game"}
     if quit:
         data["Quit"] = game.turn_of_player
     else:
         data["Quit"] = None
     send_message(sock, data, logger)
     # get board
-    # recv_data = receive_message(sock)
-    # operation_mapper(game=game, received_data=recv_data)
+    recv_data = receive_message(sock)
+    operation_mapper(game=game, received_data=recv_data ,logger=logger)
