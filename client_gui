@@ -1,18 +1,14 @@
 import selectors
 import socket
 import shared
-
-import time
+import types
 import tkinter as tk
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter.font import Font
-import json
 import client_service as cs
 import logging
-import sys
-import os
-from datetime import datetime
+
 
 BOARD_SIZE = 10
 TILE_WIDTH = 4
@@ -85,6 +81,8 @@ class client_window(tk.Tk):
         self.attributes("-topmost", True)
         self.title('Battleship')
         self.resizable(True, True)
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
 
         self.font = Font(family='Arial', size=14, weight='normal')
 
@@ -117,14 +115,13 @@ class client_window(tk.Tk):
 
         # create the boards on the display by using buttons
         self.create_boards()
-        self.update_colors()
 
         self.game = cs.ClientGamesHandler()
         self.sock = set_socket(server_addr)
         self.game_ended = False
-        #Todo: do we need to send server "start_server or we can use "start_game"
-        cs.init_names_first_game(self.sock, self.game)
+        cs.start_new_game(self.game, self.sock, logging)
 
+        self.update_colors()
         # set players name on screen
         self.my_name.set(self.game.get_my_name())
         self.opponent_name.set(self.game.get_opponent_name())
@@ -137,15 +134,27 @@ class client_window(tk.Tk):
 
     def new_game(self):
         """
-        return the state of the buttons on the opponent board to work and send the server that we want to start a new
+        reinstate the state of the buttons on the opponent board to work and send the server that we want to start a new
         game and get the new boards
         """
+        if self.game_ended:
+            self.enable_opponent_board_button()
+        cs.start_new_game(self.game, self.sock, logging, quit= not self.game_ended)
+        self.game_ended = False
+        self.update_colors()
+        print("new game")
+
+    def enable_opponent_board_button(self):
+        """ reinstate the state of the buttons on the opponent board to work """
         for i in range(BOARD_SIZE):
             for j in range(BOARD_SIZE):
                 self.opponent_frame.grid_slaves(row=i, column=j)[0].config(state="normal")
-        cs.start_new_game(self.game, self.sock, logging, quit=self.game_ended)
-        self.game_ended = False
-        print("new game")
+
+    def disable_opponent_board_button(self):
+        """ disable the state of the buttons on the opponent board so they wont work """
+        for i in range(BOARD_SIZE):
+            for j in range(BOARD_SIZE):
+                self.opponent_frame.grid_slaves(row=i, column=j)[0].config(state="disable")
 
     def create_boards(self):
         """
@@ -182,12 +191,40 @@ class client_window(tk.Tk):
                 else:
                     self.opponent_frame.grid_slaves(row=i, column=j)[0].configure(bg=BLUE)
 
+    # my_board = self.game.get_my_board()
+    # board_opponent = self.game.get_board_of_opponent()
+    # for i in range(BOARD_SIZE):
+    #     for j in range(BOARD_SIZE):
+    #         if my_board[i][j][0]:  # if there is a ship in this tile
+    #             if my_board[i][j][1]:  # the ship was hit
+    #                 self.myframe.grid_slaves(row=i, column=j)[0].configure(bg=RED)
+    #             else:
+    #                 self.myframe.grid_slaves(row=i, column=j)[0].configure(bg=GREEN)
+    #         else:
+    #             self.myframe.grid_slaves(row=i, column=j)[0].configure(bg=BLUE)
+    #
+    # for i in range(BOARD_SIZE):
+    #     for j in range(BOARD_SIZE):
+    #         if board_opponent[i][j][0] and board_opponent[i][j][
+    #             1]:  # if there is a ship in this tile and the ship was hit
+    #             self.opponent_frame.grid_slaves(row=i, column=j)[0].configure(bg=RED)
+    #         else:
+    #             self.opponent_frame.grid_slaves(row=i, column=j)[0].configure(bg=BLUE)
+
     def click(self, row, col):
         shared.send_message(self.sock, {"Action": "attack", "Hitted_player": self.game.opponent_number(),
                                         "Location": [row, col]}, logging)
         self.game.hit_on_board(row, col)  # turn opponent board on position to revealed
         cs.operation_mapper(game=self.game, received_data=shared.receive_message(self.sock, logging), sock=self.sock,
                             logger=logging, client_win=self)
+
+    def on_closing(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            data_dict = dict({"Action": "close_connection"})
+            shared.send_message(self.sock, data_dict, logging)
+            self.sock.close()
+            logging.info("socket closed")
+            self.destroy()
 
 
 

@@ -1,5 +1,8 @@
 import sys
 import tkinter as tk
+
+import Pmw
+
 from server_service import start_client
 
 
@@ -12,10 +15,11 @@ class ServerScreen(tk.Frame):
         window.resizable(True, True)
 
         tk.Frame.__init__(self, master=window, width=500, height=500)
-
+        self.window = window
         self.plyr_1_name = None
         self.plyr_2_name = None
         self.error = None
+        self.log_win = None
 
         self.title_headline = tk.Label(
             master=self,
@@ -60,11 +64,18 @@ class ServerScreen(tk.Frame):
         self.show_log_btn = tk.Button(
             master=self,
             text="Show log",
-            command=self.new_game_command,
+            command=self.log_button,
             width=20,
             height=3
         )
         self.show_log_btn.place(x=250, y=280, anchor="n")
+
+
+        self.filename = "Log\\Server_log.log"
+        self.text = None
+        self.showing_log = False
+
+
 
         #title_showlog = tk.Label(
          #   master=frame,
@@ -99,6 +110,42 @@ class ServerScreen(tk.Frame):
         print(self.plyr_1_name, self.plyr_2_name)
 
 
+    def log_button(self):
+        if not self.showing_log:
+            self.frame = tk.Frame(self, padx=5, pady=5)
+            self.frame.place(x=250, y=350, anchor="n")
+            self.text = Pmw.ScrolledText(self.frame,
+                             borderframe=5,
+                             vscrollmode='dynamic',
+                             hscrollmode='dynamic',
+                             labelpos='n',
+                             label_text='%s' % self.filename,
+                             text_width=40,
+                             text_height=4,
+                             text_wrap='none',
+                             )
+            self.text.insert('end', open(self.filename, 'r').read())
+            self.showing_log = True
+            self.text.pack()
+        else:
+            self.showing_log = False
+            self.frame.place_forget()
+
+
+        # # Toplevel object which will
+        # # be treated as a new window
+        # self.log_win = tk.Toplevel(self.window)
+        #
+        # # sets the title of the
+        # # Toplevel widget
+        # self.log_win.title("New Window")
+        #
+        # # sets the geometry of toplevel
+        # self.log_win.geometry("200x200")
+        #
+        # # A Label widget to show in toplevel
+        # tk.Label(self.log_win,
+        #       text="This is a new window").pack()
 
 
 def show_screen():

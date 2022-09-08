@@ -15,10 +15,7 @@ client to server:
 	"Action": "scores"
 }
 
-{
-	"Action": "start_server"
 
-}
 
 
 #####################
@@ -36,7 +33,8 @@ server to client:
 	"Action": "start_game",
 	"Board_1": [x,y],
 	"Board_2": [x,y],
-	"restart": True
+	"Players": ["name_player1", "name_player2"],
+	"restart": True # True only if not first game!
 
 }
 

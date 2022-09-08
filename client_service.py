@@ -4,7 +4,7 @@ from shared import *
 from playsound import playsound
 from pygame.locals import *
 
-#import board
+# import board
 
 # Set variables, like screen width and height
 #### Globals ####
@@ -31,7 +31,7 @@ DISPLAYWIDTH = 200  # Width of the game board
 EXPLOSIONSPEED = 10  # How fast the explosion graphics will play
 
 XMARGIN = int((WINDOWWIDTH - (
-            BOARDWIDTH * TILESIZE) - DISPLAYWIDTH - MARKERSIZE) / 2)  # x-position of the top left corner of board
+        BOARDWIDTH * TILESIZE) - DISPLAYWIDTH - MARKERSIZE) / 2)  # x-position of the top left corner of board
 YMARGIN = int((WINDOWHEIGHT - (BOARDHEIGHT * TILESIZE) - MARKERSIZE) / 2)  # y-position of the top left corner of board
 
 # Colours which will be used by the game
@@ -136,7 +136,7 @@ def blowup_animation(coord, elem_dict):
         elem_dict["FPSCLOCK"].tick(EXPLOSIONSPEED)  # Determine the delay to play the image with
 
 
-def draw_tile_covers(tile, coverage, elem_dict, hit= False):
+def draw_tile_covers(tile, coverage, elem_dict, hit=False):
     """
     Function draws the tiles according to a set of variables.
 
@@ -160,7 +160,7 @@ def draw_tile_covers(tile, coverage, elem_dict, hit= False):
     elem_dict["FPSCLOCK"].tick(FPS)
 
 
-def reveal_tile_animation(tile_to_reveal, elem_dict, hit = False):
+def reveal_tile_animation(tile_to_reveal, elem_dict, hit=False):
     """
     Function creates an animation which plays when the mouse is clicked on a tile, and whatever is
     behind the tile needs to be revealed.
@@ -439,6 +439,7 @@ def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SH
     # default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
     return default_tiles
 
+
 def has_adjacent(board, x_pos, y_pos, ship):
     """
     Funtion checks if a ship has adjacent ships
@@ -455,6 +456,7 @@ def has_adjacent(board, x_pos, y_pos, ship):
                     (board[x][y][0] not in (ship, None)):
                 return True
     return False
+
 
 def make_ship_position(board, x_pos, y_pos, isHorizontal, length, ship):
     """
@@ -528,7 +530,6 @@ def add_ships_to_board(board, ships):
 class ClientGamesHandler:
 
     def __init__(self):
-        # Todo add name?
         self.players_board = [None, None]
         self.players_name = [None, None]
         self.turn_of_player = random.randint(0, 1)
@@ -633,23 +634,7 @@ class ClientGamesHandler:
         self.players_board[1] = add_ships_to_board(self.players_board[1], ship_objs)
 
 
-def init_names_first_game(sock, game):
-    """
-        function that gets the players name from the server and send the boards after that
-
-        :param game: of type ClientGamesHandler, is used to keep up with important things involving the game like board, player
-        turn and etc...
-        :param sock: the socket object used to send data to the server
-    """
-
-    send_message(sock, {"Action": "start_server"}, logging)
-    received_data = receive_message(sock, logging)
-    game.set_names(received_data["Players"][0], received_data["Players"][1])
-    data = {"Action": "start_game", "Board_1": game.players_board[0], "Board_2": game.players_board[1], "Quit": None}
-    send_message(sock, data, logging)
-
-
-def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win = None, sock = None):
+def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win=None, sock=None):
     """
     this function is used to map the different actions that were received from the server with there corresponding actions
 
@@ -663,18 +648,16 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
     #     if not received_data["Restart"]:
     #         game.set_names(received_data["Players"][0], received_data["Players"][1])
 
-
-    if received_data["Action"] == "Init":
-        game.set_names(received_data["Players"][0], received_data["Players"][1])
-
-    elif received_data["Action"] == "start_game":
-        game.set_boards(received_data["Board_1"],received_data["Board_2"])
+    if received_data["Action"] == "start_game":
+        game.set_boards(received_data["Board_1"], received_data["Board_2"])
         if received_data["restart"]:
             client_win.game_ended = False
+        else:  # new game
+            game.set_names(received_data["Players"][0], received_data["Players"][1])
 
 
     elif received_data["Action"] == "hit":
-        #TODO: fix sound files maybe use pygame
+        # TODO: fix sound files maybe use pygame
         if received_data["Success"] == True:
             playsound('soundFiles\hit-water.wav')
         else:
@@ -682,17 +665,14 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
 
         if received_data["Finished"]:
             client_win.game_ended = True
-            for i in range(BOARD_SIZE):
-                for j in range(BOARD_SIZE ):
-                    client_win.opponent_frame.grid_slaves(row=i, column=j)[0].config(state="disable")
+            client_win.disable_opponent_board_button()
             if received_data["Winner"] == game.turn_of_player:
                 client_win.my_name.set(game.get_my_name() + " Has Won!")
             else:
                 client_win.opponent_name.set(game.get_opponent_name() + " Has Won!")
-        else: # if game didn't finished swap turns and update boards
+        else:  # if game didn't finished swap turns and update boards
             game.change_turn()
             client_win.update_colors()
-
 
             # TODO: show result screen
 
@@ -707,7 +687,7 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
         # TODO: consider throwing error
 
 
-def start_new_game(game, sock, logger, quit = False):
+def start_new_game(game, sock, logger, quit=False):
     """
     this function is used to send to the server that the client is starting a new game and receive from the server
     the new boards
@@ -726,4 +706,4 @@ def start_new_game(game, sock, logger, quit = False):
     send_message(sock, data, logger)
     # get board
     recv_data = receive_message(sock)
-    operation_mapper(game=game, received_data=recv_data ,logger=logger)
+    operation_mapper(game=game, received_data=recv_data, logger=logger)
