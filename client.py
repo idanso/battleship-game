@@ -143,7 +143,10 @@ def run_game(host, port, elem_dict):
 # set logger
 format_data = "%d_%m_%y_%H_%M"
 date_time = datetime.now().strftime(format_data)
-logging.basicConfig(filename='Log/Client_log_' + date_time + '.log', filemode='w',
+#log_file_name = 'Log/Client_log_' + date_time + '.log',
+log_file_name = 'Log/Client_log.log'
+
+logging.basicConfig(filename=log_file_name, filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s : %(message)s')
 

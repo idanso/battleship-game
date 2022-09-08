@@ -96,8 +96,8 @@ class ServerGamesHandler:
         game.set_players([self.get_user_by_name(players[0]), self.get_user_by_name(players[0])])
         if boards:
             game.set_boards(boards[0], boards[1])
-        # else:
-        #     game.init_auto_generated_boards()
+        else:
+            game.init_auto_generated_boards()
 
         self.add_game(game)
         return game

@@ -62,10 +62,10 @@ def operation_mapper(sock, address, received_data):
             game_handler.readyPlayers = [(server_service.User)(game.players[0]).name, (server_service.User)(game.players[1]).name]
 
 
-        game_handler.start_game(address,game_handler.readyPlayers, [received_data["Board_1"], received_data["Board_2"]])
+        game = game_handler.start_game(address,game_handler.readyPlayers)
         game_handler.readyPlayers = [None, None]
-        # data_dict = dict({"Action": "start_game", "Restart": restart})
-        # send_message(sock, data_dict)
+        data_dict = dict({"Action": "start_game", "Restart": restart, "Board_1": game.boards[0], "Board_2": game.boards[1]})
+        send_message(sock, data_dict)
 
     if received_data["Action"] == "start_server":
         # game_handler.readyPlayers = ['idan', 'shiran'] # TODO: only for testing need to delete
@@ -88,12 +88,21 @@ def operation_mapper(sock, address, received_data):
             if hit_res:
                 board[received_data["Location"][0]][received_data["Location"][1]][1] = True
             win_res = server_service.check_for_win(board)
+            winner = None
             if win_res:
                 if received_data["Hitted_player"] == 1:
                     game.players[0]["win"] += 1
                     game.players[1]["lose"] += 1
-                    game.status = server_service.GameStatus.ENDED
+                    winner = 1
+                else:
+                    game.players[0]["lose"] += 1
+                    game.players[1]["win"] += 1
+                    winner = 0
+                game.status = server_service.GameStatus.ENDED
+
             data_dict = dict({"Action": "hit", "Success": hit_res, "Finished": win_res})
+            if winner is not None:
+                data_dict["Winner"] = winner
             send_message(sock, data_dict, logging)
 
         elif received_data["Action"] == "close_connection":
@@ -131,7 +140,9 @@ def server_thread():
 # set logger
 format_data = "%d_%m_%y_%H_%M"
 date_time = datetime.now().strftime(format_data)
-logging.basicConfig(filename='Log/Server_log_' + date_time + '.log', filemode='w',
+#log_file_name = 'Log/Server_log_' + date_time + '.log'
+log_file_name = 'Log/Server_log.log'
+logging.basicConfig(filename=log_file_name, filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s : %(message)s')
 
