@@ -1,14 +1,14 @@
 import sys
+import threading
 import tkinter as tk
 
 import Pmw
 
-from server_service import start_client
+import multiConnectionServer
 
 
 class ServerScreen(tk.Frame):
     def __init__(self, window):
-
         # some screen settings
         window.attributes("-topmost", True)
         window.title('Battleship Server')
@@ -85,13 +85,14 @@ class ServerScreen(tk.Frame):
         #title_showlog.place(x=60, y=80, anchor="n")
 
     def new_game_command(self):
+        print("entered new game func")
         self.plyr_1_name = self.plyr_1_ent.get()
         self.plyr_2_name = self.plyr_2_ent.get()
         if self.plyr_1_name and self.plyr_2_name:
             self.plyr_1_ent.delete(0, 'end')
             self.plyr_2_ent.delete(0, 'end')
             # TODO actually start a game
-            start_client((self.plyr_1_name, self.plyr_2_name))
+            multiConnectionServer.start_client((self.plyr_1_name, self.plyr_2_name))
             self.plyr_1_name = None
             self.plyr_2_name = None
 
@@ -153,5 +154,13 @@ def show_screen():
     ServerScreen(root).pack(expand=True, fill='both')
     root.mainloop()
 
+
 if __name__ == "__main__":
+
+    server_main_thread = threading.Thread(target=multiConnectionServer.server_main)
+    server_main_thread.start()
     show_screen()
+
+    # ServerScreen(root).pack(expand=True, fill='both')
+    # root.mainloop()
+    # show_screen()

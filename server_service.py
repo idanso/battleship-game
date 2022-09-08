@@ -1,11 +1,13 @@
 import os
 import random
+import threading
 
 import uuid
 import enum
 import pickle
 
 #### Globals ####
+import client_gui
 from shared import send_message
 
 game_handler = None
@@ -38,7 +40,7 @@ class User:
 
 
 class Game:
-    def __init__(self, address, players=None):
+    def __init__(self, address, thread, players=None):
         self.id = uuid.uuid4()
         if players:
             self.players = players
@@ -48,6 +50,7 @@ class Game:
         # self.score = [0, 0]
         self.boards = [None, None]
         self.status = GameStatus.ACTIVE
+        self.thread = thread
 
     def init_auto_generated_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
         self.boards[0] = generate_default_tiles(height, width)
@@ -79,9 +82,10 @@ class ServerGamesHandler:
     def add_user(self, user):
         self.users.append(user)
 
-    def add_game(self, game: Game):
+    def add_game(self,game: Game, thread):
         self.games_lst.append(game)
         self.number_of_games += 1
+
 
     def start_game(self, address, players=None, boards=None): # TODO: update Doc
         """
@@ -303,15 +307,10 @@ def has_adjacent(board, x_pos, y_pos, ship):
                 return True
     return False
 
-def start_client(players=('idan', 'shiran')):
-    exec(open("client.py").read())
-    # TODO: consider adding sleep
-    for player in players:
-        if player not in game_handler.users:
-            game_handler.add_user(User(player))
 
-    game_handler.readyPlayers = players
 
-def set_game_handler(game_handler):
-    game_handler = game_handler
+
+# def set_game_handler(game_handler):
+#     global game_handler
+#     game_handler = game_handler
 

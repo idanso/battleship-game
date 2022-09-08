@@ -5,6 +5,7 @@ import threading
 import traceback
 import types
 
+import client_gui
 import server_gui
 import server_service
 from shared import *
@@ -14,6 +15,8 @@ from datetime import datetime
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
+sel = None
+game_handler = None
 
 #################
 
@@ -59,13 +62,13 @@ def operation_mapper(sock, address, received_data):
             elif received_data["Quit"] == 1:
                 (server_service.User)(game.players[0]).score["win"] += 1
                 (server_service.User)(game.players[1]).score["lose"] += 1
-            game_handler.readyPlayers = [(server_service.User)(game.players[0]).name, (server_service.User)(game.players[1]).name]
-
+            game_handler.readyPlayers = [(game.players[0]).name, (game.players[1]).name]
 
         game = game_handler.start_game(address,game_handler.readyPlayers)
         game_handler.readyPlayers = [None, None]
-        data_dict = dict({"Action": "start_game", "Restart": restart, "Board_1": game.boards[0], "Board_2": game.boards[1]})
-        send_message(sock, data_dict)
+        data_dict = dict({"Action": "start_game", "Restart": restart, "Board_1": game.boards[0], "Board_2": game.boards[1],
+                            "Players":  [(game.players[0]).name, (game.players[1]).name]})
+        send_message(sock, data_dict, logging)
 
     if received_data["Action"] == "start_server":
         # game_handler.readyPlayers = ['idan', 'shiran'] # TODO: only for testing need to delete
@@ -116,6 +119,7 @@ def operation_mapper(sock, address, received_data):
             # TODO: consider throwing error
 
 def server_thread():
+    global sel
     host, port = HOST, PORT  # sys.argv[1], int(sys.argv[2])
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.bind((host, port))
@@ -137,36 +141,51 @@ def server_thread():
         sel.close()
         logging.info("socket closed")
 
-# set logger
-format_data = "%d_%m_%y_%H_%M"
-date_time = datetime.now().strftime(format_data)
-#log_file_name = 'Log/Server_log_' + date_time + '.log'
-log_file_name = 'Log/Server_log.log'
-logging.basicConfig(filename=log_file_name, filemode='w',
-                    level=logging.DEBUG,
-                    format='%(asctime)s : %(message)s')
 
-sel = selectors.DefaultSelector()
+def start_client(players=('idan', 'shiran')):
+    global game_handler
+    print("started thread gui")
+    # exec(open("client_gui.py").read())
+    # TODO: consider adding sleep
+    for player in players:
+        if player not in game_handler.users:
+            game_handler.add_user(server_service.User(player))
 
-if exists(server_service.FILE_NAME):
-    game_handler = server_service.load_data_from_file()
-else:
-    game_handler = server_service.ServerGamesHandler()
+    game_handler.readyPlayers = players
+    client_gui_thread = threading.Thread(target=client_gui.start_client_gui())
+    client_gui_thread.start()
 
 
+def server_main():
+    global sel, game_handler
+    # set logger
+    format_data = "%d_%m_%y_%H_%M"
+    date_time = datetime.now().strftime(format_data)
+    #log_file_name = 'Log/Server_log_' + date_time + '.log'
+    log_file_name = 'Log/Server_log.log'
+    logging.basicConfig(filename=log_file_name, filemode='w',
+                        level=logging.DEBUG,
+                        format='%(asctime)s : %(message)s')
 
+    sel = selectors.DefaultSelector()
 
+    if exists(server_service.FILE_NAME):
+        game_handler = server_service.load_data_from_file()
+    else:
+        game_handler = server_service.ServerGamesHandler()
 
-server_service.set_game_handler(game_handler)
+    # server_service.set_game_handler(game_handler)
 
-# server_main_thread = threading.Thread(target=server_thread)
-# # server_main_thread.setDaemon(True)
-server_gui_thread = threading.Thread(target=server_gui.show_screen)
-# server_main_thread.start()
-server_gui_thread.start()
+    # server_main_thread = threading.Thread(target=server_thread)
+    # # server_main_thread.setDaemon(True)
+#   server_gui_thread = threading.Thread(target=server_gui.show_screen)
+    # server_main_thread.start()
+    # server_gui_thread.start()
 
-while server_gui_thread.is_alive():
-    pass
+    # while server_gui_thread.is_alive():
+    #     pass
 
-game_handler.finish_all_games()
-server_service.save_data_to_file(game_handler)
+    server_thread()
+
+    game_handler.finish_all_games()
+    server_service.save_data_to_file(game_handler)

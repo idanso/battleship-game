@@ -650,7 +650,7 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
 
     if received_data["Action"] == "start_game":
         game.set_boards(received_data["Board_1"], received_data["Board_2"])
-        if received_data["restart"]:
+        if received_data["Restart"]:
             client_win.game_ended = False
         else:  # new game
             game.set_names(received_data["Players"][0], received_data["Players"][1])
@@ -705,5 +705,5 @@ def start_new_game(game, sock, logger, quit=False):
         data["Quit"] = None
     send_message(sock, data, logger)
     # get board
-    recv_data = receive_message(sock)
+    recv_data = receive_message(sock, logger)
     operation_mapper(game=game, received_data=recv_data, logger=logger)

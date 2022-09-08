@@ -227,6 +227,6 @@ class client_window(tk.Tk):
             self.destroy()
 
 
-
-temp = client_window(('127.0.0.1', 1233))
-temp.mainloop()
+def start_client_gui():
+    temp = client_window(('127.0.0.1', 1233))
+    temp.mainloop()
