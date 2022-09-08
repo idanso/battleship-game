@@ -40,7 +40,7 @@ class User:
 
 
 class Game:
-    def __init__(self, address, thread, players=None):
+    def __init__(self, address, players=None):
         self.id = uuid.uuid4()
         if players:
             self.players = players
@@ -50,7 +50,7 @@ class Game:
         # self.score = [0, 0]
         self.boards = [None, None]
         self.status = GameStatus.ACTIVE
-        self.thread = thread
+
 
     def init_auto_generated_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
         self.boards[0] = generate_default_tiles(height, width)
@@ -83,7 +83,7 @@ class ServerGamesHandler:
     def add_user(self, user):
         self.users.append(user)
 
-    def add_game(self,game: Game, thread):
+    def add_game(self,game: Game):
         self.games_lst.append(game)
         self.number_of_games += 1
 

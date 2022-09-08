@@ -583,13 +583,13 @@ class ClientGamesHandler:
         """
             :return: String; the name of the opponent
         """
-        return self.players_board[self.turn_of_player - 1]
+        return self.players_name[self.turn_of_player - 1]
 
     def get_my_name(self):
         """
             :return: String; the name of the current player
         """
-        return self.players_board[self.turn_of_player]
+        return self.players_name[self.turn_of_player]
 
     def get_my_board(self):
         """
@@ -659,19 +659,20 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
     elif received_data["Action"] == "hit":
         # TODO: fix sound files maybe use pygame
         if received_data["Success"] == True:
-            playsound('soundFiles\hit-water.wav')
+            # playsound('soundFiles\hit-water.wav')
+            pass
         else:
             playsound('soundFiles\sea-explosion.wav')
 
         if received_data["Finished"]:
             client_win.game_ended = True
             client_win.disable_opponent_board_button()
-            if received_data["Winner"] == game.turn_of_player:
-                client_win.my_name.set(game.get_my_name() + " Has Won!")
-            else:
-                client_win.opponent_name.set(game.get_opponent_name() + " Has Won!")
+            client_win.my_name_label.configure(text =game.get_my_name() + " Has Won!")
+
         else:  # if game didn't finished swap turns and update boards
             game.change_turn()
+            client_win.my_name_label.configure(text=game.get_my_name())
+            client_win.opponent_name_label.configure(text=game.get_opponent_name())
             client_win.update_colors()
 
             # TODO: show result screen
@@ -687,7 +688,7 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
         # TODO: consider throwing error
 
 
-def start_new_game(game, sock, logger, quit=False):
+def start_new_game(game, sock, logger, client_win, quit=False):
     """
     this function is used to send to the server that the client is starting a new game and receive from the server
     the new boards
@@ -706,4 +707,4 @@ def start_new_game(game, sock, logger, quit=False):
     send_message(sock, data, logger)
     # get board
     recv_data = receive_message(sock, logger)
-    operation_mapper(game=game, received_data=recv_data, logger=logger)
+    operation_mapper(game=game, received_data=recv_data, logger=logger, client_win=client_win)

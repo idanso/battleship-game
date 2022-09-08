@@ -77,13 +77,6 @@ class ServerScreen(tk.Frame):
 
 
 
-        #title_showlog = tk.Label(
-         #   master=frame,
-          #  text="Show Log",
-           # width=20,
-        #)
-        #title_showlog.place(x=60, y=80, anchor="n")
-
     def new_game_command(self):
         print("entered new game func")
         self.plyr_1_name = self.plyr_1_ent.get()
@@ -108,11 +101,11 @@ class ServerScreen(tk.Frame):
             )
             self.error.place(x=250, y=30, anchor="n")
 
-        print(self.plyr_1_name, self.plyr_2_name)
 
 
     def log_button(self):
         if not self.showing_log:
+            self.show_log_btn.configure(text="Hide log")
             self.frame = tk.Frame(self, padx=5, pady=5)
             self.frame.place(x=250, y=350, anchor="n")
             self.text = Pmw.ScrolledText(self.frame,
@@ -120,8 +113,8 @@ class ServerScreen(tk.Frame):
                              vscrollmode='dynamic',
                              hscrollmode='dynamic',
                              labelpos='n',
-                             label_text='%s' % self.filename,
-                             text_width=40,
+                             label_text='Server Log',
+                             text_width=55,
                              text_height=4,
                              text_wrap='none',
                              )
@@ -129,24 +122,12 @@ class ServerScreen(tk.Frame):
             self.showing_log = True
             self.text.pack()
         else:
+            self.show_log_btn.configure(text="Show log")
             self.showing_log = False
             self.frame.place_forget()
 
 
-        # # Toplevel object which will
-        # # be treated as a new window
-        # self.log_win = tk.Toplevel(self.window)
-        #
-        # # sets the title of the
-        # # Toplevel widget
-        # self.log_win.title("New Window")
-        #
-        # # sets the geometry of toplevel
-        # self.log_win.geometry("200x200")
-        #
-        # # A Label widget to show in toplevel
-        # tk.Label(self.log_win,
-        #       text="This is a new window").pack()
+
 
 
 def show_screen():
