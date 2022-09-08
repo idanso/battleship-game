@@ -64,8 +64,9 @@ def operation_mapper(sock, address, received_data):
                 (server_service.User)(game.players[1]).score["lose"] += 1
             game_handler.readyPlayers = [(game.players[0]).name, (game.players[1]).name]
 
-        game = game_handler.start_game(address,game_handler.readyPlayers)
+        game = game_handler.start_game(address,game_handler.readyPlayers, game_handler.ready_thread)
         game_handler.readyPlayers = [None, None]
+        game_handler.ready_thread = None
         data_dict = dict({"Action": "start_game", "Restart": restart, "Board_1": game.boards[0], "Board_2": game.boards[1],
                             "Players":  [(game.players[0]).name, (game.players[1]).name]})
         send_message(sock, data_dict, logging)
@@ -153,6 +154,7 @@ def start_client(players=('idan', 'shiran')):
 
     game_handler.readyPlayers = players
     client_gui_thread = threading.Thread(target=client_gui.start_client_gui())
+    game_handler.readyThread = client_gui_thread
     client_gui_thread.start()
 
 

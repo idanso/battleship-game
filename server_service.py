@@ -78,6 +78,7 @@ class ServerGamesHandler:
         self.games_lst = []
         self.users = []
         self.readyPlayers = [None, None]
+        self.readyThread = None
 
     def add_user(self, user):
         self.users.append(user)
@@ -87,13 +88,13 @@ class ServerGamesHandler:
         self.number_of_games += 1
 
 
-    def start_game(self, address, players=None, boards=None): # TODO: update Doc
+    def start_game(self, address, players=None, boards=None, thread): # TODO: update Doc
         """
         create new game with initialized random boards for each player and add it to the games list
         :param: two players who will take park of the game
         :return: the game id
         """
-        game = Game(address)
+        game = Game(address, thread)
 
 
 
