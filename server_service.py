@@ -1,22 +1,15 @@
 import copy
-import os
 import random
-import threading
 
 import uuid
 import enum
 import pickle
 
 #### Globals ####
-import client_gui
-from shared import send_message
-
-game_handler = None
-
 DEFAULT_SHIP_NAME = None
 DEFAULT_BOOL_SHOT = False
 
-FILE_NAME = "saved_data"
+FILE_NAME = "saved_data.pkl"
 
 BOARD_WIDTH = 10  # Number of grids horizontally
 BOARD_HEIGHT = 10  # Number of grids vertically
@@ -100,7 +93,7 @@ class ServerGamesHandler:
 
 
 
-        game.set_players([self.get_user_by_name(players[0]), self.get_user_by_name(players[0])])
+        game.set_players([self.get_user_by_name(players[0]), self.get_user_by_name(players[1])])
         if boards:
             game.set_boards(boards[0], boards[1])
         else:
@@ -151,14 +144,27 @@ class ServerGamesHandler:
         self.kill_server = False
 
 
+class Game_handler_locker:
+    def __init__(self):
+        self.game_handler = None
+
+    def set_game_handler(self, game_handler):
+        self.game_handler = game_handler
+    def create_game_handler(self):
+        self.game_handler = ServerGamesHandler()
+
+    @property
+    def get_game_handler(self):
+        return self.game_handler
+
 def save_data_to_file(game_handler, file_name=FILE_NAME):
-    game_handler_copy = copy.deepcopy(game_handler)
-    with open(file_name + ".pkl", 'wb') as f:
-        pickle.dump(game_handler_copy, f)
+    # game_handler_copy = copy.deepcopy(game_handler)
+    with open(file_name, 'wb') as f:
+        pickle.dump(game_handler, f)
 
 
 def load_data_from_file(file_name=FILE_NAME):
-    with open(file_name + ".pkl", 'rb') as f:
+    with open(file_name, 'rb') as f:
         game_handler = pickle.load(f)
     return game_handler
 
