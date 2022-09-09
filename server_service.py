@@ -2,6 +2,7 @@ import random
 import uuid
 import enum
 import pickle
+import matplotlib.pyplot as plt
 
 #### Globals ####
 DEFAULT_SHIP_NAME = None
@@ -160,14 +161,31 @@ class ServerGamesHandler:
         return None
 
 
-    def get_ordered_5_best_players(self, reverse=True) -> list:
+    def get_ordered_best_players(self, reverse=True) -> list:
         """
-        Function to get ordered 5 best players with most or least wins
+        Function to get ordered best players with most or least wins
 
         :param: reverse: bool specify order of the sorted uesrs list
         :return: list of type 'User' sorted by wins count of each user
         """
-        return sorted(self.users, key=lambda user: user.score["win"], reverse=reverse)[:5]
+        return sorted(self.users, key=lambda user: user.score["win"], reverse=reverse)
+
+    def get_best_players_plot(self):
+        best_players = self.get_ordered_best_players()
+        wins_lst = list(map(lambda user: user.score["win"], best_players))
+        players_lst = list(map(lambda user: user.name, best_players))
+        plt.bar(players_lst, wins_lst)
+
+    def get_ordered_most_games(self, reverse=True):
+        return sorted(self.users, key=lambda user: user.score["win"] + user.score["lose"], reverse=reverse)
+
+    def get_string_players_with_most_games(self):
+        most_played_players = list(map(lambda user: [user.name, user.score["wins"] + user.score["lose"]], self.get_ordered_most_games()))
+        out_str = "   Player Name   | Number Of Games |\n"
+        out_str += "------------------------------------\n"
+        for i, user in enumerate(most_played_players):
+            out_str += str(str(i) + ") " + str(user[0])).ljust(17) + "|   " + str(user[1]).ljust(13)
+        return out_str
 
     def get_user_by_name(self, name: str) -> User:
         """
