@@ -1,5 +1,7 @@
 import selectors
 import socket
+import time
+import pygame
 import shared
 import types
 import tkinter as tk
@@ -15,29 +17,12 @@ TILE_HEIGHT = 2
 BUTTON_WIDTH = 10
 BUTTON_HEIGHT = 1
 
-HEADER = 64  # each message will have a header to tell the message size
-PORT = 5050
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
-GET_BOARD_MESSAGE = "GET_BOARD"
-GET_TURN_MESSAGE = "GET_TURN"
-WAIT_TURN_MESSAGE = "WAIT_TURN"
-TRY_HIT_MESSAGE = "TRY_HIT"
-RESULT_HIT_MESSAGE = "RESULT_HIT"
-PID_MESSAGE = "PID"
-GAME_OVER = "GAME_OVER"
-YOUR_TURN = "Your turn, Select opponent battleship location"
-OPPONENT_TURN = "Opponent Turn, please wait"
 BLACK = "#000000"
 GREEN = "#33FF33"
-WHITE = (255, 255, 255)
+YELLOW = "#FFFF00"
 BLUE = "#0080FF"
 RED = "#FF0000"
 GREY = "#C0C0C0"
-XL_SHIP = 4
-L_SHIP = 3
-M_SHIP = 2
-S_SHIP = 1
 
 sel = selectors.DefaultSelector()
 messages = [b"Message 1 from client.", b"Message 2 from client."]
@@ -108,7 +93,7 @@ class client_window(tk.Tk):
         cs.start_new_game(self.game, self.sock, logging, self)
 
         self.update_colors()
-
+        pygame.mixer.init()
         # make player board name labels
         self.my_name_label = Label(self.right_frame, text=self.game.get_my_name(), font=self.font)
         self.my_name_label.pack(side=TOP, pady=5, padx=200)
@@ -192,9 +177,15 @@ class client_window(tk.Tk):
                     self.opponent_frame.grid_slaves(row=i, column=j)[0].configure(bg=BLUE)
 
     def click(self, row, col):
+        """
+            Function that do all the necessary action upon clicking a tile on the board
+            :param row: int; x position of tile
+            :param col: int; y position of tile
+        """
         if self.game.get_board_of_opponent()[row][col][1]:
             pass
         else:
+            time.sleep(0.2)
             shared.send_message(self.sock, {"Action": "attack", "Hitted_player": self.game.opponent_number(),
                                             "Location": [row, col]}, logging)
             self.game.hit_on_board(row, col)  # turn opponent board on position to revealed
@@ -203,6 +194,7 @@ class client_window(tk.Tk):
                                 logger=logging, client_win=self)
 
     def on_closing(self):
+        """ Function that do all the necessary action upon closing the window"""
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             data_dict = dict({"Action": "close_connection"})
             shared.send_message(self.sock, data_dict, logging)
@@ -212,5 +204,6 @@ class client_window(tk.Tk):
 
 
 def start_client_gui():
+    """function that start the client gui and connect to the server"""
     temp = client_window(('127.0.0.1', 1233))
     temp.mainloop()

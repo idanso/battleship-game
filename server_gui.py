@@ -2,13 +2,14 @@ import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox
-
 import Pmw
-
 import multiConnectionServer
 
 
 class ServerScreen(tk.Frame):
+    """
+        ServerScreen represents a server with it's screen and data
+    """
     def __init__(self, window):
         # some screen settings
         window.attributes("-topmost", True)
@@ -69,15 +70,33 @@ class ServerScreen(tk.Frame):
             width=20,
             height=3
         )
-        self.show_log_btn.place(x=250, y=280, anchor="n")
+        self.show_log_btn.place(x=150, y=280, anchor="n")
+
+        self.show_graph_btn = tk.Button(
+            master=self,
+            text="Show graph",
+            command=self.show_graph_command,
+            width=20,
+            height=3
+        )
+        self.show_graph_btn.place(x=350, y=280, anchor="n")
 
         self.filename = "Log\\Server_log.log"
         self.text = None
         self.showing_log = False
 
+    def show_graph_command(self):
+        """fuction for the show graph button that open a new window and displays the graph"""
+        graph_Window = tk.Toplevel(self)
+        graph_Window.attributes("-topmost", True)
+        graph_Window.title('Players graph')
+        graph_Window.resizable(True, True)
+        #to show graph just do
+        #plt.show()
 
 
     def new_game_command(self):
+        """fuction for the start a new client upon press of new game button """
         self.plyr_1_name = self.plyr_1_ent.get()
         self.plyr_2_name = self.plyr_2_ent.get()
         if self.plyr_1_name and self.plyr_2_name:
@@ -103,9 +122,10 @@ class ServerScreen(tk.Frame):
 
 
     def log_button(self):
+        """fuction for the reveal the log upon press of the show log button """
         if not self.showing_log:
             self.show_log_btn.configure(text="Hide log")
-            self.frame = tk.Frame(self, padx=5, pady=5)
+            self.frame = tk.Frame(self, padx=5, pady=10)
             self.frame.place(x=250, y=350, anchor="n")
             self.text = Pmw.ScrolledText(self.frame,
                              borderframe=5,
@@ -127,6 +147,7 @@ class ServerScreen(tk.Frame):
 
 
 def show_screen():
+    """function that start a new window to make sure before closing"""
     root = tk.Tk()
     root.protocol("WM_DELETE_WINDOW", lambda : root.destroy() if messagebox.askokcancel("Quit", "Do you want to quit?") else None)
     ServerScreen(root).pack(expand=True, fill='both')

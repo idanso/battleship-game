@@ -258,7 +258,7 @@ def check_revealed_tile(board, tile):
     :param: tile: location of tile
     :returns: True if ship piece exists at tile location
     """
-    return board[tile[0]][tile[1]] is not None
+    return board[tile[0]][tile[1]][0]
 
 
 def check_for_win(board):

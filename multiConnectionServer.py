@@ -2,7 +2,6 @@ import socket
 import selectors
 import threading
 import types
-
 import client_gui
 import server_service
 from shared import *
