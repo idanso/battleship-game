@@ -688,7 +688,7 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
         # TODO: consider throwing error
 
 
-def start_new_game(game, sock, logger, client_win, quit=False):
+def start_new_game(game:ClientGamesHandler, sock, logger, client_win, quit=False):
     """
     this function is used to send to the server that the client is starting a new game and receive from the server
     the new boards
@@ -704,6 +704,7 @@ def start_new_game(game, sock, logger, client_win, quit=False):
         data["Quit"] = game.turn_of_player
     else:
         data["Quit"] = None
+        data["Players"] = game.players_name
     send_message(sock, data, logger)
     # get board
     recv_data = receive_message(sock, logger)
