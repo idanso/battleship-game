@@ -9,6 +9,7 @@ client to server:
 {
 	"Action": "start_game",
 	"Quit": 2 // 0- first player quit, 1- second player quit, else- no one quit
+	"Players": None / ['idan, 'shiran']
 }
 
 {

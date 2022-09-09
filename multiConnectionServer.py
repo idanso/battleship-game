@@ -65,6 +65,8 @@ def operation_mapper(sock, address, received_data):
                 game.players[1].score["lose"] += 1
             game_handler.readyPlayers = [game.players[0].name, game.players[1].name]
 
+        if received_data["Players"] is not None:
+            game_handler.readyPlayers = received_data["Players"]
         game = game_handler.start_game(address=address,players=game_handler.readyPlayers, thread=game_handler.ready_thread)
         game_handler.readyPlayers = [None, None]
         game_handler.ready_thread = None
@@ -165,7 +167,7 @@ def server_main():
     date_time = datetime.now().strftime(format_data)
     #log_file_name = 'Log/Server_log_' + date_time + '.log'
     log_file_name = 'Log/Server_log.log'
-    logging.basicConfig(filename=log_file_name, filemode='w',
+    logging.basicConfig(filename=log_file_name, filemode='a',
                         level=logging.DEBUG,
                         format='%(asctime)s : %(message)s')
 
