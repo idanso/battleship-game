@@ -1,6 +1,7 @@
 import sys
 import threading
 import tkinter as tk
+from tkinter import messagebox
 
 import Pmw
 
@@ -70,7 +71,6 @@ class ServerScreen(tk.Frame):
         )
         self.show_log_btn.place(x=250, y=280, anchor="n")
 
-
         self.filename = "Log\\Server_log.log"
         self.text = None
         self.showing_log = False
@@ -78,7 +78,6 @@ class ServerScreen(tk.Frame):
 
 
     def new_game_command(self):
-        print("entered new game func")
         self.plyr_1_name = self.plyr_1_ent.get()
         self.plyr_2_name = self.plyr_2_ent.get()
         if self.plyr_1_name and self.plyr_2_name:
@@ -127,11 +126,9 @@ class ServerScreen(tk.Frame):
             self.frame.place_forget()
 
 
-
-
-
 def show_screen():
     root = tk.Tk()
+    root.protocol("WM_DELETE_WINDOW", lambda : root.destroy() if messagebox.askokcancel("Quit", "Do you want to quit?") else None)
     ServerScreen(root).pack(expand=True, fill='both')
     root.mainloop()
 
@@ -141,6 +138,9 @@ if __name__ == "__main__":
     server_main_thread = threading.Thread(target=multiConnectionServer.server_main)
     server_main_thread.start()
     show_screen()
+    multiConnectionServer.end_server_thread()
+    print("finished server gui")
+
 
     # ServerScreen(root).pack(expand=True, fill='both')
     # root.mainloop()

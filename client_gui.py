@@ -4,7 +4,7 @@ import shared
 import types
 import tkinter as tk
 from tkinter import *
-from tkinter import ttk, messagebox
+from tkinter import messagebox
 from tkinter.font import Font
 import client_service as cs
 import logging

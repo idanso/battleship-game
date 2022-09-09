@@ -1,3 +1,4 @@
+import copy
 import os
 import random
 import threading
@@ -78,7 +79,8 @@ class ServerGamesHandler:
         self.games_lst = []
         self.users = []
         self.readyPlayers = [None, None]
-        self.readyThread = None
+        self.ready_thread = None
+        self.kill_server = False
 
     def add_user(self, user):
         self.users.append(user)
@@ -88,7 +90,7 @@ class ServerGamesHandler:
         self.number_of_games += 1
 
 
-    def start_game(self, address, players=None, boards=None, thread): # TODO: update Doc
+    def start_game(self, address, players=None, boards=None, thread=None): # TODO: update Doc
         """
         create new game with initialized random boards for each player and add it to the games list
         :param: two players who will take park of the game
@@ -143,14 +145,20 @@ class ServerGamesHandler:
             if game.status == GameStatus.ACTIVE:
                 game.status = GameStatus.ENDED
 
+    def reset_vars(self):
+        self.readyPlayers = [None, None]
+        self.ready_thread = None
+        self.kill_server = False
+
 
 def save_data_to_file(game_handler, file_name=FILE_NAME):
-    with open(file_name, 'wb') as f:
-        pickle.dump(game_handler, f)
+    game_handler_copy = copy.deepcopy(game_handler)
+    with open(file_name + ".pkl", 'wb') as f:
+        pickle.dump(game_handler_copy, f)
 
 
 def load_data_from_file(file_name=FILE_NAME):
-    with open(file_name, 'rb') as f:
+    with open(file_name + ".pkl", 'rb') as f:
         game_handler = pickle.load(f)
     return game_handler
 

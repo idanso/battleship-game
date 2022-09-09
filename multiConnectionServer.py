@@ -130,7 +130,9 @@ def server_thread():
     sel.register(lsock, selectors.EVENT_READ, data=None)
     try:
         while True:
-            events = sel.select(timeout=None)
+            if game_handler.kill_server:
+                break
+            events = sel.select(timeout=0.5)
             for key, mask in events:
                 if key.data is None:
                     accept_wrapper(key.fileobj)
@@ -145,8 +147,6 @@ def server_thread():
 
 def start_client(players=('idan', 'shiran')):
     global game_handler
-    print("started thread gui")
-    # exec(open("client_gui.py").read())
     # TODO: consider adding sleep
     for player in players:
         if player not in game_handler.users:
@@ -154,7 +154,8 @@ def start_client(players=('idan', 'shiran')):
 
     game_handler.readyPlayers = players
     client_gui_thread = threading.Thread(target=client_gui.start_client_gui())
-    game_handler.readyThread = client_gui_thread
+    client_gui_thread.setDaemon(True)
+    game_handler.ready_thread = client_gui_thread
     client_gui_thread.start()
 
 
@@ -173,21 +174,15 @@ def server_main():
 
     if exists(server_service.FILE_NAME):
         game_handler = server_service.load_data_from_file()
+        game_handler.reset_vars()
     else:
         game_handler = server_service.ServerGamesHandler()
-
-    # server_service.set_game_handler(game_handler)
-
-    # server_main_thread = threading.Thread(target=server_thread)
-    # # server_main_thread.setDaemon(True)
-#   server_gui_thread = threading.Thread(target=server_gui.show_screen)
-    # server_main_thread.start()
-    # server_gui_thread.start()
-
-    # while server_gui_thread.is_alive():
-    #     pass
 
     server_thread()
 
     game_handler.finish_all_games()
     server_service.save_data_to_file(game_handler)
+
+def end_server_thread():
+    global game_handler
+    game_handler.kill_server = True
