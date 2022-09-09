@@ -1,6 +1,4 @@
-import copy
 import random
-
 import uuid
 import enum
 import pickle
@@ -17,36 +15,49 @@ BOARD_HEIGHT = 10  # Number of grids vertically
 
 ################
 
-
 class GameStatus(enum.Enum):
+    """
+    Enum class for game status
+    """
     ACTIVE = 1
     ENDED = 2
-    READY = 3
 
 
 class User:
-    def __init__(self, name):
+    """
+    class User stores the players data with their name and overall score
+    """
+    def __init__(self, name: str):
         self.name = name
         self.score = {"win": 0, "lose": 0}
 
-    def __cmp__(self, other):
+    def __cmp__(self, other: str):
         return self.name == other.name
 
 
 class Game:
-    def __init__(self, address, players=None):
+    """
+    class Game  to store individual game between two players, their socket address from client, players boards and game status of the game
+    """
+    def __init__(self, address, players: [User, User]=None):
         self.id = uuid.uuid4()
         if players:
             self.players = players
         else:
             self.players = [None, None]
         self.address = address
-        # self.score = [0, 0]
         self.boards = [None, None]
         self.status = GameStatus.ACTIVE
 
 
     def init_auto_generated_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
+        """
+        Function generate random boards for two players with custom or predefine ships and add them to the players board.
+
+        :param height: int board height
+        :param width: int board width
+        :param ships_objs: list of names of ships to place on board
+        """
         self.boards[0] = generate_default_tiles(height, width)
         self.boards[1] = generate_default_tiles(height, width)
 
@@ -58,16 +69,37 @@ class Game:
         self.boards[0] = add_ships_to_board(self.boards[0], ship_objs)
         self.boards[1] = add_ships_to_board(self.boards[1], ship_objs)
 
-    def set_players(self, players):
+    def set_players(self, players: [User, User]):
+        """
+        Function set players to game
+
+        :param players: list[2] of two players of object 'User'
+        """
         self.players = players
 
     def set_boards(self, board1, board2):
+        """
+        Function set boards of players to game
+
+        :param board1: list[][] 2D matrix of board for player 1, every elemet is tuple('shipName', boolShot)
+        :param board2: list[][] 2D matrix of board for player 2, every elemet is tuple('shipName', boolShot)
+        """
         self.boards[0] = board1
         self.boards[1] = board2
 
 
 class ServerGamesHandler:
     def __init__(self):
+        """
+        Class for managing all games and server objects
+
+        :attribute number_of_games: int count number of games stored
+        :attribute games_lst: list of type 'Game' stores all games
+        :attribute users: list of type 'User' stores all users
+        :attribute readyPlayers: list[2] of type string stores names of players ready to enter game
+        :attribute ready_thread: Thread stores the client thread of the game ready to start
+        :attribute kill_server: bool to state if server need to exit
+        """
         self.number_of_games = 0
         self.games_lst = []
         self.users = []
@@ -75,24 +107,36 @@ class ServerGamesHandler:
         self.ready_thread = None
         self.kill_server = False
 
-    def add_user(self, user):
+    def add_user(self, user: User):
+        """
+        function for adding new user to users list
+
+        :param user: User to append list
+        """
         self.users.append(user)
 
     def add_game(self,game: Game):
+        """
+        function for adding new user to users list
+
+        :param user: User to append list
+        """
         self.games_lst.append(game)
         self.number_of_games += 1
 
 
-    def start_game(self, address, players=None, boards=None, thread=None): # TODO: update Doc
+    def start_game(self, address, players: [str, str]=None, boards=None, thread=None) -> Game:
         """
-        create new game with initialized random boards for each player and add it to the games list
-        :param: two players who will take park of the game
-        :return: the game id
+        create new game with  for each player and add it to the games list
+
+        :param address: tuple containing port and address of client socket
+        :param players: list[2] player's names of type trings
+        :param boards: list[2] of board with list[][] 2D matrix of board, every element is tuple('shipName', boolShot)
+        :param thread: Thread stores the client thread of the game
+
+        :return: 'Game' object of the new created game
         """
         game = Game(address, thread)
-
-
-
         game.set_players([self.get_user_by_name(players[0]), self.get_user_by_name(players[1])])
         if boards:
             game.set_boards(boards[0], boards[1])
@@ -104,52 +148,66 @@ class ServerGamesHandler:
 
     def get_game_by_address(self, game_address) -> Game:
         """
-        :param: player_port: the socket port of the player
-        :return: id of active game of the player with player_port, id of player
-                if player not found return None
+        Function get game with the given address(address, port)
+
+        :param: game_address: tuple containing port and address of client socket
+        :return: 'Game' object of the game with with the game address,
+                if game not found return None
         """
         for game in self.games_lst:
             if game.status == GameStatus.ACTIVE and game.address[0] == game_address[0] and game.address[1] == game_address[1]:
                 return game
         return None
 
-    def get_game_by_id(self, game_address):
-        """
-        :param: player_port: the socket port of the player
-        :return: id of active game of the player with player_port, id of player
-                if player not found return None
-        """
-        for game in self.games_lst:
-            if game.status == GameStatus.ACTIVE and game.address[0] == game[0] and game.address[1] == game[1]:
-                return tuple(game.id)
-        return None
 
-    def get_ordered_5_players(self, reverse=True):
+    def get_ordered_5_best_players(self, reverse=True) -> list:
+        """
+        Function to get ordered 5 best players with most or least wins
+
+        :param: reverse: bool specify order of the sorted uesrs list
+        :return: list of type 'User' sorted by wins count of each user
+        """
         return sorted(self.users, key=lambda user: user.score["win"], reverse=reverse)[:5]
 
-    def get_user_by_name(self, name):
+    def get_user_by_name(self, name: str) -> User:
+        """
+        function get user by given name
+
+        :param: name: str name of user to return
+        :return: User with the name of the given name, if not found return None
+        """
         for user in self.users:
             if user.name == name:
                 return user
         return None
 
     def finish_all_games(self):
+        """
+        function change all games with status ACTIVE to ENDED
+        """
         for game in self.games_lst:
             if game.status == GameStatus.ACTIVE:
                 game.status = GameStatus.ENDED
 
     def reset_vars(self):
+        """
+        function init attributes readyPlayers, ready_thread to None and kill_server to False
+        """
         self.readyPlayers = [None, None]
         self.ready_thread = None
         self.kill_server = False
 
 
 class Game_handler_locker:
+    """
+    Class to keep 'ServerGamesHandler' object and manage access to by other threads
+    """
     def __init__(self):
         self.game_handler = None
 
     def set_game_handler(self, game_handler):
         self.game_handler = game_handler
+
     def create_game_handler(self):
         self.game_handler = ServerGamesHandler()
 
@@ -158,32 +216,37 @@ class Game_handler_locker:
         return self.game_handler
 
 def save_data_to_file(game_handler, file_name=FILE_NAME):
-    # game_handler_copy = copy.deepcopy(game_handler)
+    """
+    Func save 'ServerGamesHandler' to file using pickle
+    """
     with open(file_name, 'wb') as f:
         pickle.dump(game_handler, f)
 
 
-def load_data_from_file(file_name=FILE_NAME):
+def load_data_from_file(file_name=FILE_NAME) -> ServerGamesHandler:
+    """
+    Func load 'ServerGamesHandler' data from file using pickle
+    :return: ServerGamesHandler object with data loaded from file
+    """
     with open(file_name, 'rb') as f:
         game_handler = pickle.load(f)
     return game_handler
 
 
 def generate_default_tiles(height: int, width: int, ship_name_default=DEFAULT_SHIP_NAME,
-                           bool_shot_default=DEFAULT_BOOL_SHOT):
+                           bool_shot_default=DEFAULT_BOOL_SHOT) -> list:
     """
     Function generates a list of height x width tiles. The list will contain list
     ('shipName', boolShot) set to their (default_value).
 
-    default_value -> boolean which tells what the value to set to
-    :returns: the list of tuples
+    :param: height: set the height of board matrix
+    :param: width: set the width of board matrix
+    :param: ship_name_default: which tells what the value to set to as ship name
+    :param: bool_shot_default: which tells what the value to set to as shot value
+
+    :returns: list[][] 2D matrix of board, every element is tuple('shipName', boolShot)
     """
     default_tiles = [[[ship_name_default, bool_shot_default] for _ in range(width)] for _ in range(height)]
-    #  TODO: delete if unnecessary
-    # for x in range(height):
-    #     for y in range(width):
-    #         default_tiles[x][y] = (ship_name_default, bool_shot_default)
-    # default_tiles = np.full((height, width), (ship_name_default, bool_shot_default), dtype='V,V')
     return default_tiles
 
 
@@ -191,9 +254,9 @@ def check_revealed_tile(board, tile):
     """
     Function checks if a tile location contains a ship piece.
 
-    board -> the tiled board either a ship piece or none
-    tile -> location of tile
-    returns True if ship piece exists at tile location
+    :param: board: the tiled board either a ship piece or none
+    :param: tile: location of tile
+    :returns: True if ship piece exists at tile location
     """
     return board[tile[0]][tile[1]] is not None
 
@@ -202,8 +265,8 @@ def check_for_win(board):
     """
     Function checks if the current board state is a winning state.
 
-    board -> the board which contains the ship pieces
-    returns True if all the ships are revealed
+    :param: board: the board which contains the ship pieces
+    :returns: True if all the ships are revealed
     """
     for tilex in range(len(board)):
         for tiley in range(len(board[0])):
@@ -219,8 +282,8 @@ def set_markers(board):
     Function creates the lists of the markers to the side of the game board which indicates
     the number of ship pieces in each row and column.
 
-    board: list of board tiles
-    returns the 2 lists of markers with number of ship pieces in each row (xmarkers)
+    :param: board: list of board tiles
+    :returns: the 2 lists of markers with number of ship pieces in each row (xmarkers)
         and column (ymarkers)
     """
     size_col = len(board[1])
@@ -241,9 +304,9 @@ def add_ships_to_board(board, ships):
     """
     Function goes through a list of ships and add them randomly into a board.
 
-    board -> list of board tiles
-    ships -> list of ships to place on board
-    returns list of board tiles with ships placed on certain tiles
+    :param: board: list of board tiles
+    :param: ships: list of ships to place on board
+    :returns: list of board tiles with ships placed on certain tiles
     """
     new_board = board[:]
     ship_length = 0
@@ -278,12 +341,12 @@ def make_ship_position(board, x_pos, y_pos, isHorizontal, length, ship):
     """
     Function makes a ship on a board given a set of variables
 
-    board -> list of board tiles
-    xPos -> x-coordinate of first ship piece
-    yPos -> y-coordinate of first ship piece
-    isHorizontal -> True if ship is horizontal
-    length -> length of ship
-    returns tuple: True if ship position is valid and list ship coordinates
+    :param: board: list of board tiles
+    :param: xPos: x-coordinate of first ship piece
+    :param: yPos: y-coordinate of first ship piece
+    :param: isHorizontal: True if ship is horizontal
+    :param: length: length of ship
+    :returns: tuple True if ship position is valid and list ship coordinates
     """
     ship_coordinates = []  # the coordinates the ship will occupy
     if isHorizontal:
@@ -307,13 +370,13 @@ def make_ship_position(board, x_pos, y_pos, isHorizontal, length, ship):
 
 def has_adjacent(board, x_pos, y_pos, ship):
     """
-    Funtion checks if a ship has adjacent ships
+    Function checks if a ship has adjacent ships
 
-    board -> list of board tiles
-    xPos -> x-coordinate of first ship piece
-    yPos -> y-coordinate of first ship piece
-    ship -> the ship being checked for adjacency
-    returns true if there are adjacent ships and false if there are no adjacent ships
+    :param: board -> list of board tiles
+    :param: xPos: x-coordinate of first ship piece
+    :param: yPos: y-coordinate of first ship piece
+    :param: ship: the ship being checked for adjacency
+    :returns: true if there are adjacent ships and false if there are no adjacent ships
     """
     for x in range(x_pos - 1, x_pos + 2):
         for y in range(y_pos - 1, y_pos + 2):
@@ -321,11 +384,4 @@ def has_adjacent(board, x_pos, y_pos, ship):
                     (board[x][y][0] not in (ship, None)):
                 return True
     return False
-
-
-
-
-# def set_game_handler(game_handler):
-#     global game_handler
-#     game_handler = game_handler
 

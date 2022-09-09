@@ -1,4 +1,4 @@
-import random, sys, pygame
+import random, sys
 import logging
 from shared import *
 from playsound import playsound
@@ -78,149 +78,149 @@ def init_elements(counter: int, elem_dict):
     return elem_dict
 
 
-def set_window(elem_dict):
-    """
-        do initialization to parameters involving pygame window that happens only once at start
-        :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
-
-        :return: elem_dict:Dict
-
-    """
-    window_H = WINDOWHEIGHT
-    window_W = WINDOWWIDTH
-
-    pygame.init()
-
-    elem_dict["FPSCLOCK"] = pygame.time.Clock()
-    # Fonts used by the game
-
-    elem_dict["BASICFONT"] = pygame.font.Font('freesansbold.ttf', 20)
-    elem_dict["BIGFONT"] = pygame.font.Font('freesansbold.ttf', 50)
-
-    # Create and label the buttons
-    elem_dict["HELP_SURF"] = elem_dict["BASICFONT"].render("HELP", True, WHITE)
-    elem_dict["HELP_RECT"] = elem_dict["HELP_SURF"].get_rect()
-    elem_dict["HELP_RECT"].topleft = (window_W - 180, window_H - 350)
-    elem_dict["NEW_SURF"] = elem_dict["BASICFONT"].render("NEW GAME", True, WHITE)
-    elem_dict["NEW_RECT"] = elem_dict["NEW_SURF"].get_rect()
-    elem_dict["NEW_RECT"].topleft = (window_W - 200, window_H - 200)
-
-    # The 'Shots:' label at the top
-    elem_dict["SHOTS_SURF"] = elem_dict["BASICFONT"].render("Shots: ", True, WHITE)
-    elem_dict["SHOTS_RECT"] = elem_dict["SHOTS_SURF"].get_rect()
-    elem_dict["SHOTS_RECT"].topleft = (window_W - 750, window_H - 570)
-
-    # Load the explosion graphics from the /img folder
-    elem_dict["EXPLOSION_IMAGES"] = [
-        pygame.image.load("img/blowup1.png"), pygame.image.load("img/blowup2.png"),
-        pygame.image.load("img/blowup3.png"), pygame.image.load("img/blowup4.png"),
-        pygame.image.load("img/blowup5.png"), pygame.image.load("img/blowup6.png")]
-    pygame.display.set_caption('Battleship')
-    return elem_dict
-
-
-def blowup_animation(coord, elem_dict):
-    """
-    Function creates the explosition played if a ship is shot.
-
-    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
-
-    :param coord: tuple of tile coords to apply the blowup animation
-    """
-    for image in elem_dict[
-        "EXPLOSION_IMAGES"]:  # go through the list of images in the list of pictures and play them in sequence
-        # Determine the location and size to display the image
-        image = pygame.transform.scale(image, (TILESIZE + 10, TILESIZE + 10))
-        elem_dict["DISPLAYSURF"].blit(image, coord)
-        pygame.display.flip()
-        elem_dict["FPSCLOCK"].tick(EXPLOSIONSPEED)  # Determine the delay to play the image with
-
-
-def draw_tile_covers(tile, coverage, elem_dict, hit=False):
-    """
-    Function draws the tiles according to a set of variables.
-
-    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
-    :param tile: tuple; of tile coords to reveal
-    :param coverage: int; amount of the tile that is covered
-    :param hit: did the tile contained a ship that was hit
-    """
-    left, top = left_top_coords_tile(tile[0], tile[1])
-    if hit:
-        pygame.draw.rect(elem_dict["DISPLAYSURF"], SHIPCOLOR, (left, top, TILESIZE,
-                                                               TILESIZE))
-    else:
-        pygame.draw.rect(elem_dict["DISPLAYSURF"], BGCOLOR, (left, top, TILESIZE,
-                                                             TILESIZE))
-    if coverage > 0:
-        pygame.draw.rect(elem_dict["DISPLAYSURF"], TILECOLOR, (left, top, coverage,
-                                                               TILESIZE))
-
-    pygame.display.update()
-    elem_dict["FPSCLOCK"].tick(FPS)
-
-
-def reveal_tile_animation(tile_to_reveal, elem_dict, hit=False):
-    """
-    Function creates an animation which plays when the mouse is clicked on a tile, and whatever is
-    behind the tile needs to be revealed.
-
-    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
-    :param tile_to_reveal: tuple of tile coords to apply the reveal animation to
-    :param hit: Boolean that indicate if the tile contained a ship that was hit
-
-    """
-    for coverage in range(TILESIZE, (-REVEALSPEED) - 1, -REVEALSPEED):  # Plays animation based on reveal speed
-        draw_tile_covers(tile_to_reveal, coverage, elem_dict, hit)
-
-
-def draw_board(board, elem_dict, my_board: bool):
-    """
-    Function draws the game board.
-
-    :param board: list of board tiles
-    :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
-    :param my_board: Bool that indicates if we need to cover the ships that still wasn't revealed
-    """
-    # draws the grids depending on its state
-    for tilex in range(BOARDWIDTH):
-        for tiley in range(BOARDHEIGHT):
-            left, top = left_top_coords_tile(tilex, tiley)
-            if not board[tilex][tiley][1] and not my_board:
-                pygame.draw.rect(elem_dict["DISPLAYSURF"], TILECOLOR, (left, top, TILESIZE,
-                                                                       TILESIZE))
-            else:
-                if board[tilex][tiley][0] is not None:
-                    pygame.draw.rect(elem_dict["DISPLAYSURF"], SHIPCOLOR, (left, top,
-                                                                           TILESIZE, TILESIZE))
-                else:
-                    pygame.draw.rect(elem_dict["DISPLAYSURF"], BGCOLOR, (left, top,
-                                                                         TILESIZE, TILESIZE))
-    # draws the horizontal lines
-    for x in range(0, (BOARDWIDTH + 1) * TILESIZE, TILESIZE):
-        pygame.draw.line(elem_dict["DISPLAYSURF"], DARKGRAY, (x + XMARGIN + MARKERSIZE,
-                                                              YMARGIN + MARKERSIZE), (x + XMARGIN + MARKERSIZE,
-                                                                                      WINDOWHEIGHT - YMARGIN))
-    # draws the vertical lines
-    for y in range(0, (BOARDHEIGHT + 1) * TILESIZE, TILESIZE):
-        pygame.draw.line(elem_dict["DISPLAYSURF"], DARKGRAY, (XMARGIN + MARKERSIZE, y +
-                                                              YMARGIN + MARKERSIZE),
-                         (WINDOWWIDTH - (DISPLAYWIDTH + MARKERSIZE *
-                                         2), y + YMARGIN + MARKERSIZE))
-
-
-def check_for_quit():
-    """
-    Function checks if the user has attempted to quit the game.
-
-    :return: Boolean
-    """
-    for event in pygame.event.get(QUIT):
-        pygame.quit()
-        sys.exit()
-        return False
-    return True
-
+# def set_window(elem_dict):
+#     """
+#         do initialization to parameters involving pygame window that happens only once at start
+#         :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+#
+#         :return: elem_dict:Dict
+#
+#     """
+#     window_H = WINDOWHEIGHT
+#     window_W = WINDOWWIDTH
+#
+#     pygame.init()
+#
+#     elem_dict["FPSCLOCK"] = pygame.time.Clock()
+#     # Fonts used by the game
+#
+#     elem_dict["BASICFONT"] = pygame.font.Font('freesansbold.ttf', 20)
+#     elem_dict["BIGFONT"] = pygame.font.Font('freesansbold.ttf', 50)
+#
+#     # Create and label the buttons
+#     elem_dict["HELP_SURF"] = elem_dict["BASICFONT"].render("HELP", True, WHITE)
+#     elem_dict["HELP_RECT"] = elem_dict["HELP_SURF"].get_rect()
+#     elem_dict["HELP_RECT"].topleft = (window_W - 180, window_H - 350)
+#     elem_dict["NEW_SURF"] = elem_dict["BASICFONT"].render("NEW GAME", True, WHITE)
+#     elem_dict["NEW_RECT"] = elem_dict["NEW_SURF"].get_rect()
+#     elem_dict["NEW_RECT"].topleft = (window_W - 200, window_H - 200)
+#
+#     # The 'Shots:' label at the top
+#     elem_dict["SHOTS_SURF"] = elem_dict["BASICFONT"].render("Shots: ", True, WHITE)
+#     elem_dict["SHOTS_RECT"] = elem_dict["SHOTS_SURF"].get_rect()
+#     elem_dict["SHOTS_RECT"].topleft = (window_W - 750, window_H - 570)
+#
+#     # Load the explosion graphics from the /img folder
+#     elem_dict["EXPLOSION_IMAGES"] = [
+#         pygame.image.load("img/blowup1.png"), pygame.image.load("img/blowup2.png"),
+#         pygame.image.load("img/blowup3.png"), pygame.image.load("img/blowup4.png"),
+#         pygame.image.load("img/blowup5.png"), pygame.image.load("img/blowup6.png")]
+#     pygame.display.set_caption('Battleship')
+#     return elem_dict
+#
+#
+# def blowup_animation(coord, elem_dict):
+#     """
+#     Function creates the explosition played if a ship is shot.
+#
+#     :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+#
+#     :param coord: tuple of tile coords to apply the blowup animation
+#     """
+#     for image in elem_dict[
+#         "EXPLOSION_IMAGES"]:  # go through the list of images in the list of pictures and play them in sequence
+#         # Determine the location and size to display the image
+#         image = pygame.transform.scale(image, (TILESIZE + 10, TILESIZE + 10))
+#         elem_dict["DISPLAYSURF"].blit(image, coord)
+#         pygame.display.flip()
+#         elem_dict["FPSCLOCK"].tick(EXPLOSIONSPEED)  # Determine the delay to play the image with
+#
+#
+# def draw_tile_covers(tile, coverage, elem_dict, hit=False):
+#     """
+#     Function draws the tiles according to a set of variables.
+#
+#     :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+#     :param tile: tuple; of tile coords to reveal
+#     :param coverage: int; amount of the tile that is covered
+#     :param hit: did the tile contained a ship that was hit
+#     """
+#     left, top = left_top_coords_tile(tile[0], tile[1])
+#     if hit:
+#         pygame.draw.rect(elem_dict["DISPLAYSURF"], SHIPCOLOR, (left, top, TILESIZE,
+#                                                                TILESIZE))
+#     else:
+#         pygame.draw.rect(elem_dict["DISPLAYSURF"], BGCOLOR, (left, top, TILESIZE,
+#                                                              TILESIZE))
+#     if coverage > 0:
+#         pygame.draw.rect(elem_dict["DISPLAYSURF"], TILECOLOR, (left, top, coverage,
+#                                                                TILESIZE))
+#
+#     pygame.display.update()
+#     elem_dict["FPSCLOCK"].tick(FPS)
+#
+#
+# def reveal_tile_animation(tile_to_reveal, elem_dict, hit=False):
+#     """
+#     Function creates an animation which plays when the mouse is clicked on a tile, and whatever is
+#     behind the tile needs to be revealed.
+#
+#     :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+#     :param tile_to_reveal: tuple of tile coords to apply the reveal animation to
+#     :param hit: Boolean that indicate if the tile contained a ship that was hit
+#
+#     """
+#     for coverage in range(TILESIZE, (-REVEALSPEED) - 1, -REVEALSPEED):  # Plays animation based on reveal speed
+#         draw_tile_covers(tile_to_reveal, coverage, elem_dict, hit)
+#
+#
+# def draw_board(board, elem_dict, my_board: bool):
+#     """
+#     Function draws the game board.
+#
+#     :param board: list of board tiles
+#     :param elem_dict: Dict that contains all the necessary element for the pygame display to make changes
+#     :param my_board: Bool that indicates if we need to cover the ships that still wasn't revealed
+#     """
+#     # draws the grids depending on its state
+#     for tilex in range(BOARDWIDTH):
+#         for tiley in range(BOARDHEIGHT):
+#             left, top = left_top_coords_tile(tilex, tiley)
+#             if not board[tilex][tiley][1] and not my_board:
+#                 pygame.draw.rect(elem_dict["DISPLAYSURF"], TILECOLOR, (left, top, TILESIZE,
+#                                                                        TILESIZE))
+#             else:
+#                 if board[tilex][tiley][0] is not None:
+#                     pygame.draw.rect(elem_dict["DISPLAYSURF"], SHIPCOLOR, (left, top,
+#                                                                            TILESIZE, TILESIZE))
+#                 else:
+#                     pygame.draw.rect(elem_dict["DISPLAYSURF"], BGCOLOR, (left, top,
+#                                                                          TILESIZE, TILESIZE))
+#     # draws the horizontal lines
+#     for x in range(0, (BOARDWIDTH + 1) * TILESIZE, TILESIZE):
+#         pygame.draw.line(elem_dict["DISPLAYSURF"], DARKGRAY, (x + XMARGIN + MARKERSIZE,
+#                                                               YMARGIN + MARKERSIZE), (x + XMARGIN + MARKERSIZE,
+#                                                                                       WINDOWHEIGHT - YMARGIN))
+#     # draws the vertical lines
+#     for y in range(0, (BOARDHEIGHT + 1) * TILESIZE, TILESIZE):
+#         pygame.draw.line(elem_dict["DISPLAYSURF"], DARKGRAY, (XMARGIN + MARKERSIZE, y +
+#                                                               YMARGIN + MARKERSIZE),
+#                          (WINDOWWIDTH - (DISPLAYWIDTH + MARKERSIZE *
+#                                          2), y + YMARGIN + MARKERSIZE))
+#
+#
+# def check_for_quit():
+#     """
+#     Function checks if the user has attempted to quit the game.
+#
+#     :return: Boolean
+#     """
+#     for event in pygame.event.get(QUIT):
+#         pygame.quit()
+#         sys.exit()
+#         return False
+#     return True
+#
 
 def set_markers(board):
     """

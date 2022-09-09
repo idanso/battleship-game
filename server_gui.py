@@ -139,9 +139,3 @@ if __name__ == "__main__":
     server_main_thread.start()
     show_screen()
     multiConnectionServer.end_server_thread()
-    print("finished server gui")
-
-
-    # ServerScreen(root).pack(expand=True, fill='both')
-    # root.mainloop()
-    # show_screen()
