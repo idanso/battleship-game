@@ -6,6 +6,7 @@ from tkinter import messagebox
 import Pmw
 import multiConnectionServer
 import client_gui
+import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
@@ -107,19 +108,48 @@ class ServerScreen(tk.Tk):
             graph_Window.resizable(True, True)
             graph_Window.protocol("WM_DELETE_WINDOW", lambda: graph_Window.destroy())
             data = multiConnectionServer.get_results_data()
-            if len(data["plot"]) > 5:
+            if len(data["wins"]) > 5:
                 data["plot"] = data["plot"][:5]
-            wins_lst = list(map(lambda user: user.score["win"], data["plot"][:5]))
-            players_lst = list(map(lambda user: user.name, data["plot"][:5]))
-            figure = Figure(figsize=(6, 4), dpi=100)
-            figure_canvas = FigureCanvasTkAgg(figure, graph_Window)
-            NavigationToolbar2Tk(figure_canvas, graph_Window)
-            axes = figure.add_subplot()
-            axes.bar(players_lst, wins_lst)
-            axes.set_title('Top 5 Best Players')
-            axes.set_ylabel('Wins Count')
-            figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-            print(data["games"])
+            if len(data["games"]) > 5:
+                data["games"] = data["games"][:5]
+            wins_lst = list(map(lambda user: user.score["win"], data["wins"][:5]))
+            players_lst = list(map(lambda user: user.name, data["wins"][:5]))
+            # figure = Figure(figsize=(6, 4), dpi=100)
+            # figure_canvas = FigureCanvasTkAgg(figure, graph_Window)
+            # NavigationToolbar2Tk(figure_canvas, graph_Window)
+            # axes_wins = figure.add_subplot(111)
+            # axes_wins.bar(players_lst, wins_lst)
+            # axes_wins.set_title('Top 5 Players most wins')
+            # axes_wins.set_ylabel('Wins Count')
+
+            ######
+            figure1 = Figure(figsize=(6, 5), dpi=100)
+            ax1 = figure1.add_subplot(111)
+            bar1 = FigureCanvasTkAgg(figure1, graph_Window)
+            bar1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            df1 = pd.DataFrame(wins_lst, index=players_lst, columns=["Wins"])
+            df1.plot(kind='bar', ax=ax1)
+            ax1.set_title('Top 5 Players most wins')
+
+            games_lst = list(map(lambda user: user.score["win"] + user.score["lose"], data["games"][:5]))
+            players_lst = list(map(lambda user: user.name, data["games"][:5]))
+
+            figure2 = Figure(figsize=(5, 4), dpi=100)
+            ax2 = figure2.add_subplot(111)
+            line2 = FigureCanvasTkAgg(figure2, graph_Window)
+            line2.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            df2 = pd.DataFrame(games_lst, index=players_lst, columns=["Games"])
+            df2.plot(kind='bar', ax=ax2)
+            ax2.set_title('Top 5 Players most games')
+            #####
+
+            # games_lst = list(map(lambda user: user.score["win"] + user.score["lose"], data["games"][:5]))
+            # players_lst = list(map(lambda user: user.name, data["games"][:5]))
+            # axes_games = figure.add_subplot(111)
+            # axes_games.bar(players_lst, games_lst)
+            # axes_games.set_title('Top 5 Players most games ')
+            # axes_games.set_ylabel('games Count')
+            # figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         except Exception as e:
             logging.error(traceback.format_exc())
 

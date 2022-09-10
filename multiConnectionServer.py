@@ -161,25 +161,6 @@ def server_thread():
         logging.info("socket closed")
 
 
-# def start_client(players=('idan', 'shiran')):
-#     """
-#     Function for starting new client and the client gui as a thread
-#     :Param players: new players names for the new game
-#     """
-#     global game_handler_locker
-#     game_handler = game_handler_locker.get_game_handler
-#     for player in players:
-#         user = game_handler.get_user_by_name(player)
-#         if not user:
-#             game_handler.add_user(player)
-#
-#     game_handler.readyPlayers = players
-#     client_gui_thread = threading.Thread(target=client_gui.start_client_gui)
-#     client_gui_thread.setDaemon(True)
-#     game_handler.ready_thread = client_gui_thread
-#     client_gui_thread.start()
-
-
 def server_main(game_handler):
     """
     Function main function of the server to initiate Logger and game handler and call the server thread for main operation
@@ -189,8 +170,6 @@ def server_main(game_handler):
         game_handler_locker = game_handler
         # set logger
         format_data = "%d_%m_%y_%H_%M"
-        date_time = datetime.now().strftime(format_data)
-        #log_file_name = 'Log/Server_log_' + date_time + '.log'
         log_file_name = 'Log/Server_log.log'
         logging = log.getLogger()
         logging.setLevel(log.DEBUG)
@@ -225,6 +204,6 @@ def get_results_data():
     Function returning data for the result window
     """
     global game_handler_locker
-    data = {"plot": game_handler_locker.get_game_handler.get_ordered_best_players(),
-            "games": game_handler_locker.get_game_handler.get_string_players_with_most_games()}
+    data = {"wins": game_handler_locker.get_game_handler.get_ordered_best_players(),
+            "games": game_handler_locker.get_game_handler.get_ordered_most_games()}
     return data
