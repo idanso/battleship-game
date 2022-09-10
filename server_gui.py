@@ -119,7 +119,6 @@ class ServerScreen(tk.Tk):
             axes.set_title('Top 5 Best Players')
             axes.set_ylabel('Wins Count')
             figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-            print(data["games"])
         except Exception as e:
             logging.error(traceback.format_exc())
 

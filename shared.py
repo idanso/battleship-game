@@ -29,7 +29,6 @@ def receive_message(sock, logger):
     :return: dictionary containing the data
 
     """
-    # try:
     recv_data = sock.recv(5120)
     if recv_data:
         json_data = bytes(recv_data).decode()
@@ -38,8 +37,3 @@ def receive_message(sock, logger):
     else:
         logger.info("No data to receive")
         return None
-
-
-    # except Exception:
-    #     logger.error(traceback.format_exc())
-    #     return None

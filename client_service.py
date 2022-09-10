@@ -118,31 +118,30 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
     elif received_data["Action"] == "hit":
         # TODO: fix sound files maybe use pygame
         if received_data["Success"]:
-            pygame.mixer.music.load('soundFiles\hit-water.wav')
+            pygame.mixer.music.load('soundFiles\sea-explosion.wav')
+            pygame.mixer.music.set_volume(0.3)
             pygame.mixer.music.play(loops=0)
         else:
-            pygame.mixer.music.load('soundFiles\sea-explosion.wav')
+            pygame.mixer.music.load('soundFiles\hit-water.wav')
+            pygame.mixer.music.set_volume(0.3)
             pygame.mixer.music.play(loops=0)
 
         if received_data["Finished"]:
             client_win.game_ended = True
             client_win.disable_opponent_board_button()
-            client_win.my_name_label.configure(text=game.get_my_name() + " Has Won!")
+            client_win.change_name_lbl(True)
 
         else:  # if game didn't finished swap turns and update boards
             game.change_turn()
-            client_win.my_name_label.configure(text=game.get_my_name())
-            client_win.opponent_name_label.configure(text=game.get_opponent_name())
+            client_win.change_name_lbl()
             client_win.update_colors()
 
-            # TODO: show result screen
 
     elif received_data["Action"] == "ok":
         pass
 
     else:
         print("unknown Action: %s", received_data["Action"])
-        # TODO: consider throwing error
 
 
 def start_new_game(game: ClientGamesHandler, sock, logger, client_win, quit=False):
