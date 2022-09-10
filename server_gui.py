@@ -108,7 +108,7 @@ class ServerScreen(tk.Tk):
             graph_Window.protocol("WM_DELETE_WINDOW", lambda: graph_Window.destroy())
             data = multiConnectionServer.get_results_data()
             if len(data["wins"]) > 5:
-                data["plot"] = data["plot"][:5]
+                data["wins"] = data["wins"][:5]
             if len(data["games"]) > 5:
                 data["games"] = data["games"][:5]
 
