@@ -3,6 +3,10 @@ import uuid
 import enum
 import pickle
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg,
+    NavigationToolbar2Tk)
 
 #### Globals ####
 DEFAULT_SHIP_NAME = None
@@ -276,7 +280,9 @@ def check_revealed_tile(board, tile):
     :param: tile: location of tile
     :returns: True if ship piece exists at tile location
     """
-    return board[tile[0]][tile[1]][0]
+    if board[tile[0]][tile[1]][0] is None:
+        return False
+    return True
 
 
 def check_for_win(board):

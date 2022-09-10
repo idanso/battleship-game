@@ -1,9 +1,18 @@
 import sys
 import threading
+import logging
 import tkinter as tk
+import traceback
 from tkinter import messagebox
 import Pmw
 import multiConnectionServer
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg,
+    NavigationToolbar2Tk
+)
+
+graphWindow = None
 
 
 class ServerScreen(tk.Frame):
@@ -87,12 +96,28 @@ class ServerScreen(tk.Frame):
 
     def show_graph_command(self):
         """fuction for the show graph button that open a new window and displays the graph"""
-        graph_Window = tk.Toplevel(self)
-        graph_Window.attributes("-topmost", True)
-        graph_Window.title('Players graph')
-        graph_Window.resizable(True, True)
-        #to show graph just do
-        #plt.show()
+        try:
+            global graphWindow
+            graph_Window = tk.Toplevel(self)
+            graph_Window.attributes("-topmost", True)
+            graph_Window.title('Result Summary')
+            graph_Window.resizable(True, True)
+            graph_Window.protocol("WM_DELETE_WINDOW", lambda: graph_Window.destroy())
+            data = multiConnectionServer.get_plot_data()
+            if len(data) > 5:
+                data = data[:5]
+            wins_lst = list(map(lambda user: user.score["win"], data[:5]))
+            players_lst = list(map(lambda user: user.name, data[:5]))
+            figure = Figure(figsize=(6, 4), dpi=100)
+            figure_canvas = FigureCanvasTkAgg(figure, graph_Window)
+            NavigationToolbar2Tk(figure_canvas, graph_Window)
+            axes = figure.add_subplot()
+            axes.bar(players_lst, wins_lst)
+            axes.set_title('Top 5 Best Players')
+            axes.set_ylabel('Wins Count')
+            figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        except Exception():
+            logging.error(traceback.format_exc())
 
 
     def new_game_command(self):
@@ -102,7 +127,6 @@ class ServerScreen(tk.Frame):
         if self.plyr_1_name and self.plyr_2_name:
             self.plyr_1_ent.delete(0, 'end')
             self.plyr_2_ent.delete(0, 'end')
-            # TODO actually start a game
             multiConnectionServer.start_client((self.plyr_1_name, self.plyr_2_name))
             self.plyr_1_name = None
             self.plyr_2_name = None

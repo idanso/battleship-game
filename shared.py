@@ -29,17 +29,17 @@ def receive_message(sock, logger):
     :return: dictionary containing the data
 
     """
-    try:
-        recv_data = sock.recv(5120)
-        if recv_data:
-            json_data = bytes(recv_data).decode()
-            logger.info("Message received: " + str(json_data))
-            return json.loads(json_data)
-        else:
-            logger.info("No data to receive")
-            return None
-
-
-    except Exception:
-        logger.error(traceback.format_exc())
+    # try:
+    recv_data = sock.recv(5120)
+    if recv_data:
+        json_data = bytes(recv_data).decode()
+        logger.info("Message received: " + str(json_data))
+        return json.loads(json_data)
+    else:
+        logger.info("No data to receive")
         return None
+
+
+    # except Exception:
+    #     logger.error(traceback.format_exc())
+    #     return None

@@ -1,18 +1,21 @@
 import socket
 import selectors
+import sys
 import threading
 import types
 import client_gui
 import server_service
 from shared import *
 from os.path import exists
-import logging
+import logging as log
 from datetime import datetime
+
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
 sel = None
 game_handler_locker = server_service.Game_handler_locker()
+Logging = None
 
 #################
 
@@ -34,7 +37,7 @@ def accept_wrapper(sock):
         logging.error(traceback.format_exc())
 
 
-def service_connection(key):
+def service_connection(key, mask):
     """
     Function for handle received messages from sockets and send it to operation_mapper
 
@@ -43,7 +46,7 @@ def service_connection(key):
     sock = key.fileobj
     data = key.data
 
-    if selectors.EVENT_READ:
+    if  mask & selectors.EVENT_READ:
         try:
             logging.info("received message data from address: " + str(data.addr))
             recv_data = receive_message(sock, logging)  # Should be ready to read
@@ -61,7 +64,6 @@ def operation_mapper(sock, address, received_data):
     :Param address: tuple containing address and port of client
     :Param received_data: dict the data receive from client buffer
     """
-
     try:
         game_handler = game_handler_locker.get_game_handler
         if received_data["Action"] == "start_game":
@@ -128,10 +130,13 @@ def operation_mapper(sock, address, received_data):
                 sock.close()
             else:
                 logging.error("unknown Action: %s", received_data["Action"])
-    except():
+    except Exception():
         logging.error(traceback.format_exc())
 
 def server_thread():
+    """
+    Function main operation of the server to initiate socket and enter the main loop for managing the sockets
+    """
     global sel, game_handler_locker
     host, port = HOST, PORT  # sys.argv[1], int(sys.argv[2])
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -145,11 +150,11 @@ def server_thread():
             if game_handler_locker.get_game_handler.kill_server:
                 break
             events = sel.select(timeout=0.5)
-            for key, _ in events:
+            for key, mask in events:
                 if key.data is None:
                     accept_wrapper(key.fileobj)
                 else:
-                    service_connection(key)
+                    service_connection(key, mask)
     except KeyboardInterrupt:
         logging.error("Caught keyboard interrupt, exiting")
         logging.error(traceback.format_exc())
@@ -159,6 +164,10 @@ def server_thread():
 
 
 def start_client(players=('idan', 'shiran')):
+    """
+    Function for starting new client and the client gui as a thread
+    :Param players: new players names for the new game
+    """
     global game_handler_locker
     game_handler = game_handler_locker.get_game_handler
     # TODO: consider adding sleep
@@ -175,29 +184,47 @@ def start_client(players=('idan', 'shiran')):
 
 
 def server_main():
-    global sel, game_handler_locker
-    # set logger
-    format_data = "%d_%m_%y_%H_%M"
-    date_time = datetime.now().strftime(format_data)
-    #log_file_name = 'Log/Server_log_' + date_time + '.log'
-    log_file_name = 'Log/Server_log.log'
-    logging.basicConfig(filename=log_file_name, filemode='a',
-                        level=logging.DEBUG,
-                        format='%(asctime)s : %(message)s')
+    """
+    Function main function of the server to initiate Logger and game handler and call the server thread for main operation
+    """
+    try:
+        global sel, game_handler_locker, logging
+        # set logger
+        format_data = "%d_%m_%y_%H_%M"
+        date_time = datetime.now().strftime(format_data)
+        #log_file_name = 'Log/Server_log_' + date_time + '.log'
+        log_file_name = 'Log/Server_log.log'
+        logging = log.getLogger()
+        logging.setLevel(log.DEBUG)
+        log.basicConfig(filename=log_file_name, filemode='a',
+                            level=log.DEBUG,
+                            format='%(asctime)s : %(message)s')
 
-    sel = selectors.DefaultSelector()
-    game_handler_locker = server_service.Game_handler_locker()
-    if exists(server_service.FILE_NAME):
-        game_handler_locker.set_game_handler(server_service.load_data_from_file())
-        game_handler_locker.get_game_handler.reset_vars()
-    else:
-        game_handler_locker.create_game_handler()
+        sel = selectors.DefaultSelector()
+        game_handler_locker = server_service.Game_handler_locker()
+        if exists(server_service.FILE_NAME):
+            game_handler_locker.set_game_handler(server_service.load_data_from_file())
+            game_handler_locker.get_game_handler.reset_vars()
+        else:
+            game_handler_locker.create_game_handler()
 
-    server_thread()
+        server_thread()
 
-    game_handler_locker.get_game_handler.finish_all_games()
-    server_service.save_data_to_file(game_handler_locker.get_game_handler)
+        game_handler_locker.get_game_handler.finish_all_games()
+        server_service.save_data_to_file(game_handler_locker.get_game_handler)
+    except Exception():
+        logging.error(traceback.format_exc())
 
 def end_server_thread():
+    """
+    Function set the game_handler to know exit application need to be done
+    """
     global game_handler_locker
     game_handler_locker.get_game_handler.kill_server = True
+
+def get_plot_data():
+    """
+    Function returning data for the result window
+    """
+    global game_handler_locker
+    return game_handler_locker.get_game_handler.get_ordered_best_players()

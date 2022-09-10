@@ -66,7 +66,6 @@ class client_window(tk.Tk):
         self.title('Battleship')
         self.resizable(True, True)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-
         self.font = Font(family='Arial', size=14, weight='normal')
 
         # Main frame so button be at middle under the boards
