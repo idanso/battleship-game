@@ -1,5 +1,4 @@
-import random, sys
-import logging
+import random
 import pygame
 from shared import *
 
@@ -116,7 +115,6 @@ def operation_mapper(game: ClientGamesHandler, received_data, logger, client_win
             game.set_names(received_data["Players"][0], received_data["Players"][1])
 
     elif received_data["Action"] == "hit":
-        # TODO: fix sound files maybe use pygame
         if received_data["Success"]:
             pygame.mixer.music.load('soundFiles\sea-explosion.wav')
             pygame.mixer.music.set_volume(0.3)

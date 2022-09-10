@@ -10,7 +10,6 @@ import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
-    NavigationToolbar2Tk
 )
 import server_service
 
@@ -134,6 +133,7 @@ class ServerScreen(tk.Tk):
             df2 = pd.DataFrame(games_lst, index=players_lst, columns=["Games"])
             df2.plot(kind='bar', ax=ax2)
             ax2.set_title('Top 5 Players most games')
+
         except Exception as e:
             logging.error(traceback.format_exc())
 
