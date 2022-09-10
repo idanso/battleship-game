@@ -33,7 +33,8 @@ def accept_wrapper(sock):
         data = types.SimpleNamespace(addr=addr)
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
         sel.register(conn, events, data=data)
-    except Exception:
+    except Exception as e:
+        print(e)
         logging.error(traceback.format_exc())
 
 
@@ -79,6 +80,7 @@ def operation_mapper(sock, address, received_data):
                     game.players[0].score["win"] += 1
                     game.players[1].score["lose"] += 1
                 game_handler.readyPlayers = [game.players[0].name, game.players[1].name]
+                game_handler.ready_thread = game.thread
 
             if "Players" in received_data.keys() and received_data["Players"][0] is not None:
                 game_handler.readyPlayers = received_data["Players"]
@@ -87,10 +89,6 @@ def operation_mapper(sock, address, received_data):
             game_handler.ready_thread = None
             data_dict = dict({"Action": "start_game", "Restart": restart, "Board_1": game.boards[0], "Board_2": game.boards[1],
                                 "Players":  [game.players[0].name, game.players[1].name]})
-            send_message(sock, data_dict, logging)
-
-        if received_data["Action"] == "start_server":
-            data_dict = dict({"Action": "start_game", "Players": game_handler.readyPlayers, "Restart": False})
             send_message(sock, data_dict, logging)
         else:
             game = game_handler.get_game_by_address(address)
@@ -128,9 +126,11 @@ def operation_mapper(sock, address, received_data):
                 game.status = server_service.GameStatus.ENDED
                 sel.unregister(sock)
                 sock.close()
+
             else:
                 logging.error("unknown Action: %s", received_data["Action"])
-    except Exception():
+    except Exception as e:
+        print(e)
         logging.error(traceback.format_exc())
 
 def server_thread():
@@ -155,7 +155,8 @@ def server_thread():
                     accept_wrapper(key.fileobj)
                 else:
                     service_connection(key, mask)
-    except KeyboardInterrupt:
+    except Exception as e:
+        print(e)
         logging.error("Caught keyboard interrupt, exiting")
         logging.error(traceback.format_exc())
     finally:
@@ -197,7 +198,7 @@ def server_main():
         logging = log.getLogger()
         logging.setLevel(log.DEBUG)
         log.basicConfig(filename=log_file_name, filemode='a',
-                            level=log.DEBUG,
+                            level=log.INFO,
                             format='%(asctime)s : %(message)s')
 
         sel = selectors.DefaultSelector()
@@ -212,7 +213,8 @@ def server_main():
 
         game_handler_locker.get_game_handler.finish_all_games()
         server_service.save_data_to_file(game_handler_locker.get_game_handler)
-    except Exception():
+    except Exception as e:
+        print(e)
         logging.error(traceback.format_exc())
 
 def end_server_thread():
@@ -222,9 +224,11 @@ def end_server_thread():
     global game_handler_locker
     game_handler_locker.get_game_handler.kill_server = True
 
-def get_plot_data():
+def get_results_data():
     """
     Function returning data for the result window
     """
     global game_handler_locker
-    return game_handler_locker.get_game_handler.get_ordered_best_players()
+    data = {"plot": game_handler_locker.get_game_handler.get_ordered_best_players(),
+            "games": game_handler_locker.get_game_handler.get_string_players_with_most_games()}
+    return data

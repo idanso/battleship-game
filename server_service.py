@@ -44,7 +44,7 @@ class Game:
     """
     class Game  to store individual game between two players, their socket address from client, players boards and game status of the game
     """
-    def __init__(self, address, players: [User, User]=None):
+    def __init__(self, address, players: [User, User]=None, thread=None):
         self.id = uuid.uuid4()
         if players:
             self.players = players
@@ -53,6 +53,7 @@ class Game:
         self.address = address
         self.boards = [None, None]
         self.status = GameStatus.ACTIVE
+        self.thread = thread
 
 
     def init_auto_generated_boards(self, height=BOARD_HEIGHT, width=BOARD_WIDTH, ships_objs=None):
@@ -141,8 +142,7 @@ class ServerGamesHandler:
 
         :return: 'Game' object of the new created game
         """
-        game = Game(address, thread)
-        game.set_players([self.get_user_by_name(players[0]), self.get_user_by_name(players[1])])
+        game = Game(address=address, thread=thread, players=[self.get_user_by_name(players[0]), self.get_user_by_name(players[1])])
         if boards:
             game.set_boards(boards[0], boards[1])
         else:
@@ -184,11 +184,11 @@ class ServerGamesHandler:
         return sorted(self.users, key=lambda user: user.score["win"] + user.score["lose"], reverse=reverse)
 
     def get_string_players_with_most_games(self):
-        most_played_players = list(map(lambda user: [user.name, user.score["wins"] + user.score["lose"]], self.get_ordered_most_games()))
-        out_str = "   Player Name   | Number Of Games |\n"
-        out_str += "------------------------------------\n"
+        most_played_players = list(map(lambda user: [user.name, user.score["win"] + user.score["lose"]], self.get_ordered_most_games()))
+        out_str = "|  Player Name  | Games Count |\n"
+        out_str += "----------------|--------------\n"
         for i, user in enumerate(most_played_players):
-            out_str += str(str(i) + ") " + str(user[0])).ljust(17) + "|   " + str(user[1]).ljust(13)
+            out_str += str(str(i+1) + ") " + str(user[0])).ljust(16) + "|   " + str(user[1]).ljust(9) + "\n"
         return out_str
 
     def get_user_by_name(self, name: str) -> User:
@@ -210,6 +210,7 @@ class ServerGamesHandler:
         for game in self.games_lst:
             if game.status == GameStatus.ACTIVE:
                 game.status = GameStatus.ENDED
+            game.thread = None
 
     def reset_vars(self):
         """

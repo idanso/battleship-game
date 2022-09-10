@@ -3,6 +3,7 @@ import threading
 import logging
 import tkinter as tk
 import traceback
+from textwrap import fill
 from tkinter import messagebox
 import Pmw
 import multiConnectionServer
@@ -15,18 +16,20 @@ from matplotlib.backends.backend_tkagg import (
 graphWindow = None
 
 
-class ServerScreen(tk.Frame):
+class ServerScreen(tk.Tk):
     """
         ServerScreen represents a server with it's screen and data
     """
-    def __init__(self, window):
+    def __init__(self):
         # some screen settings
-        window.attributes("-topmost", True)
-        window.title('Battleship Server')
-        window.resizable(True, True)
+        super().__init__()
+        self.protocol("WM_DELETE_WINDOW",
+                      lambda: self.destroy() if messagebox.askokcancel("Quit", "Do you want to quit?") else None)
+        self.attributes("-topmost", True)
+        self.title('Battleship Server')
+        self.resizable(True, True)
+        self.geometry("500x360")
 
-        tk.Frame.__init__(self, master=window, width=500, height=500)
-        self.window = window
         self.plyr_1_name = None
         self.plyr_2_name = None
         self.error = None
@@ -103,11 +106,11 @@ class ServerScreen(tk.Frame):
             graph_Window.title('Result Summary')
             graph_Window.resizable(True, True)
             graph_Window.protocol("WM_DELETE_WINDOW", lambda: graph_Window.destroy())
-            data = multiConnectionServer.get_plot_data()
-            if len(data) > 5:
-                data = data[:5]
-            wins_lst = list(map(lambda user: user.score["win"], data[:5]))
-            players_lst = list(map(lambda user: user.name, data[:5]))
+            data = multiConnectionServer.get_results_data()
+            if len(data["plot"]) > 5:
+                data["plot"] = data["plot"][:5]
+            wins_lst = list(map(lambda user: user.score["win"], data["plot"][:5]))
+            players_lst = list(map(lambda user: user.name, data["plot"][:5]))
             figure = Figure(figsize=(6, 4), dpi=100)
             figure_canvas = FigureCanvasTkAgg(figure, graph_Window)
             NavigationToolbar2Tk(figure_canvas, graph_Window)
@@ -116,7 +119,8 @@ class ServerScreen(tk.Frame):
             axes.set_title('Top 5 Best Players')
             axes.set_ylabel('Wins Count')
             figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-        except Exception():
+            print(data["games"])
+        except Exception as e:
             logging.error(traceback.format_exc())
 
 
@@ -148,8 +152,9 @@ class ServerScreen(tk.Frame):
     def log_button(self):
         """fuction for the reveal the log upon press of the show log button """
         if not self.showing_log:
+            self.geometry("630x750")
             self.show_log_btn.configure(text="Hide log")
-            self.frame = tk.Frame(self, padx=5, pady=10)
+            self.frame = tk.Frame(self, padx=5, pady=5)
             self.frame.place(x=250, y=350, anchor="n")
             self.text = Pmw.ScrolledText(self.frame,
                              borderframe=5,
@@ -157,14 +162,15 @@ class ServerScreen(tk.Frame):
                              hscrollmode='dynamic',
                              labelpos='n',
                              label_text='Server Log',
-                             text_width=55,
-                             text_height=4,
+                             text_width=90,
+                             text_height=23,
                              text_wrap='none',
                              )
             self.text.insert('end', open(self.filename, 'r').read())
             self.showing_log = True
             self.text.pack()
         else:
+            self.geometry("500x360")
             self.show_log_btn.configure(text="Show log")
             self.showing_log = False
             self.frame.place_forget()
@@ -172,10 +178,8 @@ class ServerScreen(tk.Frame):
 
 def show_screen():
     """function that start a new window to make sure before closing"""
-    root = tk.Tk()
-    root.protocol("WM_DELETE_WINDOW", lambda : root.destroy() if messagebox.askokcancel("Quit", "Do you want to quit?") else None)
-    ServerScreen(root).pack(expand=True, fill='both')
-    root.mainloop()
+    screen = ServerScreen()
+    screen.mainloop()
 
 
 if __name__ == "__main__":
