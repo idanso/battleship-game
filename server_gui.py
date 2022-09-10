@@ -1,20 +1,20 @@
-import sys
 import threading
 import logging
 import tkinter as tk
 import traceback
-from textwrap import fill
 from tkinter import messagebox
 import Pmw
 import multiConnectionServer
+import client_gui
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
     NavigationToolbar2Tk
 )
+import server_service
 
 graphWindow = None
-
+game_handler_locker = server_service.Game_handler_locker()
 
 class ServerScreen(tk.Tk):
     """
@@ -131,7 +131,7 @@ class ServerScreen(tk.Tk):
         if self.plyr_1_name and self.plyr_2_name:
             self.plyr_1_ent.delete(0, 'end')
             self.plyr_2_ent.delete(0, 'end')
-            multiConnectionServer.start_client((self.plyr_1_name, self.plyr_2_name))
+            start_client((self.plyr_1_name, self.plyr_2_name))
             self.plyr_1_name = None
             self.plyr_2_name = None
 
@@ -181,10 +181,27 @@ def show_screen():
     screen = ServerScreen()
     screen.mainloop()
 
+def start_client(players=('idan', 'shiran')):
+    """
+    Function for starting new client and the client gui as a thread
+    :Param players: new players names for the new game
+    """
+    global game_handler_locker
+    for player in players:
+        user = game_handler_locker.get_game_handler.get_user_by_name(player)
+        if not user:
+            game_handler_locker.get_game_handler.add_user(player)
+
+    game_handler_locker.get_game_handler.readyPlayers = players
+    client_gui_thread = threading.Thread(target=client_gui.start_client_gui)
+    client_gui_thread.setDaemon(True)
+    game_handler_locker.get_game_handler.ready_thread = client_gui_thread
+    client_gui_thread.start()
+
 
 if __name__ == "__main__":
 
-    server_main_thread = threading.Thread(target=multiConnectionServer.server_main)
+    server_main_thread = threading.Thread(target=multiConnectionServer.server_main, args=(game_handler_locker,))
     server_main_thread.start()
     show_screen()
     multiConnectionServer.end_server_thread()

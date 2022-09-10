@@ -2,11 +2,6 @@ import random
 import uuid
 import enum
 import pickle
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg,
-    NavigationToolbar2Tk)
 
 #### Globals ####
 DEFAULT_SHIP_NAME = None
@@ -113,13 +108,13 @@ class ServerGamesHandler:
         self.ready_thread = None
         self.kill_server = False
 
-    def add_user(self, user: User):
+    def add_user(self, user: str):
         """
         function for adding new user to users list
 
         :param user: User to append list
         """
-        self.users.append(user)
+        self.users.append(User(user))
 
     def add_game(self,game: Game):
         """
@@ -174,16 +169,21 @@ class ServerGamesHandler:
         """
         return sorted(self.users, key=lambda user: user.score["win"], reverse=reverse)
 
-    def get_best_players_plot(self):
-        best_players = self.get_ordered_best_players()
-        wins_lst = list(map(lambda user: user.score["win"], best_players))
-        players_lst = list(map(lambda user: user.name, best_players))
-        plt.bar(players_lst, wins_lst)
 
     def get_ordered_most_games(self, reverse=True):
+        """
+        Function to get ordered game count by user
+
+        :param: reverse: bool specify order of the sorted uesrs list
+        :return: list of type 'User' sorted by game count of each user
+        """
         return sorted(self.users, key=lambda user: user.score["win"] + user.score["lose"], reverse=reverse)
 
     def get_string_players_with_most_games(self):
+        """
+        Function to get string in shape of a table of most played players
+        :return: str in shape of table
+        """
         most_played_players = list(map(lambda user: [user.name, user.score["win"] + user.score["lose"]], self.get_ordered_most_games()))
         out_str = "|  Player Name  | Games Count |\n"
         out_str += "----------------|--------------\n"

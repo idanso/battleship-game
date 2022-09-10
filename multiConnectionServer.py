@@ -1,9 +1,8 @@
 import socket
 import selectors
-import sys
 import threading
 import types
-import client_gui
+# import client_gui
 import server_service
 from shared import *
 from os.path import exists
@@ -14,7 +13,7 @@ from datetime import datetime
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1233  # The port used by the server
 sel = None
-game_handler_locker = server_service.Game_handler_locker()
+game_handler_locker = None
 Logging = None
 
 #################
@@ -33,8 +32,7 @@ def accept_wrapper(sock):
         data = types.SimpleNamespace(addr=addr)
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
         sel.register(conn, events, data=data)
-    except Exception as e:
-        print(e)
+    except Exception:
         logging.error(traceback.format_exc())
 
 
@@ -155,8 +153,7 @@ def server_thread():
                     accept_wrapper(key.fileobj)
                 else:
                     service_connection(key, mask)
-    except Exception as e:
-        print(e)
+    except Exception:
         logging.error("Caught keyboard interrupt, exiting")
         logging.error(traceback.format_exc())
     finally:
@@ -164,32 +161,32 @@ def server_thread():
         logging.info("socket closed")
 
 
-def start_client(players=('idan', 'shiran')):
-    """
-    Function for starting new client and the client gui as a thread
-    :Param players: new players names for the new game
-    """
-    global game_handler_locker
-    game_handler = game_handler_locker.get_game_handler
-    # TODO: consider adding sleep
-    for player in players:
-        user = game_handler.get_user_by_name(player)
-        if not user:
-            game_handler.add_user(server_service.User(player))
+# def start_client(players=('idan', 'shiran')):
+#     """
+#     Function for starting new client and the client gui as a thread
+#     :Param players: new players names for the new game
+#     """
+#     global game_handler_locker
+#     game_handler = game_handler_locker.get_game_handler
+#     for player in players:
+#         user = game_handler.get_user_by_name(player)
+#         if not user:
+#             game_handler.add_user(player)
+#
+#     game_handler.readyPlayers = players
+#     client_gui_thread = threading.Thread(target=client_gui.start_client_gui)
+#     client_gui_thread.setDaemon(True)
+#     game_handler.ready_thread = client_gui_thread
+#     client_gui_thread.start()
 
-    game_handler.readyPlayers = players
-    client_gui_thread = threading.Thread(target=client_gui.start_client_gui)
-    client_gui_thread.setDaemon(True)
-    game_handler.ready_thread = client_gui_thread
-    client_gui_thread.start()
 
-
-def server_main():
+def server_main(game_handler):
     """
     Function main function of the server to initiate Logger and game handler and call the server thread for main operation
     """
     try:
         global sel, game_handler_locker, logging
+        game_handler_locker = game_handler
         # set logger
         format_data = "%d_%m_%y_%H_%M"
         date_time = datetime.now().strftime(format_data)
@@ -202,7 +199,6 @@ def server_main():
                             format='%(asctime)s : %(message)s')
 
         sel = selectors.DefaultSelector()
-        game_handler_locker = server_service.Game_handler_locker()
         if exists(server_service.FILE_NAME):
             game_handler_locker.set_game_handler(server_service.load_data_from_file())
             game_handler_locker.get_game_handler.reset_vars()
