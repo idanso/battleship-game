@@ -94,10 +94,10 @@ class client_window(tk.Tk):
         self.update_colors()
         pygame.mixer.init()
         # make player board name labels
-        self.my_name_label = Label(self.right_frame, text=self.game.get_my_name(), font=self.font)
-        self.my_name_label.pack(side=TOP, pady=5, padx=200)
-        self.opponent_name_label = Label(self.left_frame, text=self.game.get_opponent_name(), font=self.font)
-        self.opponent_name_label.pack(side=TOP, pady=5, padx=200)
+        self.my_name_label = Label(self.right_frame, text="My board (\""+self.game.get_my_name()+"\")", font=self.font)
+        self.my_name_label.pack(side=TOP, pady=5, padx=10)
+        self.opponent_name_label = Label(self.left_frame, text="Opponent board (\""+self.game.get_opponent_name()+"\")", font=self.font)
+        self.opponent_name_label.pack(side=TOP, pady=5, padx=10)
 
         # new game button
         self.new_game_button = Button(self, width=BUTTON_WIDTH, height=BUTTON_HEIGHT, text="New Game", font=self.font,
@@ -108,8 +108,8 @@ class client_window(tk.Tk):
         if won:
             self.my_name_label.config(text=self.game.get_my_name() + " Has Won!")
         else:
-            self.my_name_label.config(text=self.game.get_my_name())
-            self.opponent_name_label.config(text=self.game.get_opponent_name())
+            self.my_name_label.config(text="My board (\""+self.game.get_my_name()+"\")")
+            self.opponent_name_label.config(text="Opponent board (\""+self.game.get_opponent_name()+"\")")
 
     def new_game(self):
         """
@@ -120,6 +120,7 @@ class client_window(tk.Tk):
             self.enable_opponent_board_button()
         cs.start_new_game(self.game, self.sock, logging, self, quit=not self.game_ended)
         self.game_ended = False
+        self.change_name_lbl()
         self.update_colors()
 
     def enable_opponent_board_button(self):
@@ -184,13 +185,17 @@ class client_window(tk.Tk):
         if self.game.get_board_of_opponent()[row][col][1]:
             pass
         else:
-            time.sleep(0.2)
+            self.opponent_frame.grid_slaves(row=row, column=col)[0].configure(bg=YELLOW)
+            self.disable_opponent_board_button()
+            self.update()
+            time.sleep(0.25)
             shared.send_message(self.sock, {"Action": "attack", "Hitted_player": self.game.opponent_number(),
                                             "Location": [row, col]}, logging)
             self.game.hit_on_board(row, col)  # turn opponent board on position to revealed
             cs.operation_mapper(game=self.game, received_data=shared.receive_message(self.sock, logging),
                                 sock=self.sock,
                                 logger=logging, client_win=self)
+            self.enable_opponent_board_button()
 
     def on_closing(self):
         """ Function that do all the necessary action upon closing the window"""
