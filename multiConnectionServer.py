@@ -40,12 +40,13 @@ def service_connection(key, mask):
     """
     Function for handle received messages from sockets and send it to operation_mapper
 
-    :Param key: containing the socket and data attached to the socket
+    :Param key: containing socket object with data attached to the socket
+    :Param mask: event mask of the operations that are ready
     """
     sock = key.fileobj
     data = key.data
 
-    if  mask & selectors.EVENT_READ:
+    if mask & selectors.EVENT_READ:
         try:
             logging.info("received message data from address: " + str(data.addr))
             recv_data = receive_message(sock, logging)  # Should be ready to read

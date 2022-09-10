@@ -99,7 +99,7 @@ class ServerScreen(tk.Tk):
         self.showing_log = False
 
     def show_graph_command(self):
-        """fuction for the show graph button that open a new window and displays the graph"""
+        """function for the show graph button that open a new window and displays the graph"""
         try:
             global graphWindow
             graph_Window = tk.Toplevel(self)
@@ -112,18 +112,11 @@ class ServerScreen(tk.Tk):
                 data["plot"] = data["plot"][:5]
             if len(data["games"]) > 5:
                 data["games"] = data["games"][:5]
+
             wins_lst = list(map(lambda user: user.score["win"], data["wins"][:5]))
             players_lst = list(map(lambda user: user.name, data["wins"][:5]))
-            # figure = Figure(figsize=(6, 4), dpi=100)
-            # figure_canvas = FigureCanvasTkAgg(figure, graph_Window)
-            # NavigationToolbar2Tk(figure_canvas, graph_Window)
-            # axes_wins = figure.add_subplot(111)
-            # axes_wins.bar(players_lst, wins_lst)
-            # axes_wins.set_title('Top 5 Players most wins')
-            # axes_wins.set_ylabel('Wins Count')
 
-            ######
-            figure1 = Figure(figsize=(6, 5), dpi=100)
+            figure1 = Figure(figsize=(5, 4), dpi=100)
             ax1 = figure1.add_subplot(111)
             bar1 = FigureCanvasTkAgg(figure1, graph_Window)
             bar1.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
@@ -141,15 +134,6 @@ class ServerScreen(tk.Tk):
             df2 = pd.DataFrame(games_lst, index=players_lst, columns=["Games"])
             df2.plot(kind='bar', ax=ax2)
             ax2.set_title('Top 5 Players most games')
-            #####
-
-            # games_lst = list(map(lambda user: user.score["win"] + user.score["lose"], data["games"][:5]))
-            # players_lst = list(map(lambda user: user.name, data["games"][:5]))
-            # axes_games = figure.add_subplot(111)
-            # axes_games.bar(players_lst, games_lst)
-            # axes_games.set_title('Top 5 Players most games ')
-            # axes_games.set_ylabel('games Count')
-            # figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         except Exception as e:
             logging.error(traceback.format_exc())
 
